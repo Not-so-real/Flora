@@ -23,6 +23,7 @@ body {
     color: var(--text);
 }
 .logo-link {
+    
     text-decoration: none;
 }
 
@@ -30,7 +31,7 @@ body {
     font-size: 1.4rem;
     font-weight: 700;
     color: var(--text);
-
+    letter-spacing: -0.5px;
     transition: color var(--transition);
 }
 
@@ -46,6 +47,8 @@ nav {
     padding: 1.3rem 6rem;
 
     background: var(--surface);
+
+    box-shadow: var(--shadow);
 }
 
 .nav-links {
@@ -58,7 +61,12 @@ nav {
     text-decoration: none;
     color: var(--text);
     font-weight: 500;
-    transition: all var(--transition);
+
+    padding: .5rem 0;
+
+    position: relative;
+
+    transition: color var(--transition);
 }
 
 .nav-links a:hover {
