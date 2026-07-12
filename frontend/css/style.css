@@ -72,3 +72,75 @@ nav {
 .nav-links a:hover {
     color: var(--primary);
 }
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+
+.btn {
+    text-decoration: none;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+
+    padding: .85rem 1.5rem;
+
+    border-radius: var(--radius);
+
+    font-weight: 600;
+
+    transition:
+        background-color var(--transition),
+        color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+
+    box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+    background: #1D4ED8;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 14px 40px rgba(37,99,235,.22);
+}
+
+.btn-outline {
+
+    background: var(--surface);
+
+    color: var(--text);
+
+    border: 1px solid var(--border);
+
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+.btn-outline:hover {
+
+    color: var(--primary);
+
+    border-color: var(--primary);
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 10px 25px rgba(37,99,235,.12);
+}
+
+.arrow {
+    transition: transform var(--transition);
+}
+
+.btn-primary:hover .arrow {
+    transform: translateX(3px);
+}
