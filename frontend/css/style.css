@@ -1,192 +1,304 @@
+/* ==========================================
+   FLORA - Main Stylesheet
+   Version: 1.0
+========================================== */
+
+
+/* ==========================================
+   1. CSS VARIABLES
+========================================== */
 
 :root {
+
     --background: #FAFAFA;
     --surface: #FFFFFF;
+
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+
     --text: #111827;
     --text-light: #6B7280;
-    --primary: #2563EB;
+
     --border: #E5E7EB;
-    --shadow: 0 8px 30px rgba(0,0,0,0.08);
-    --radius: 14px;
-    --transition: 0.25s ease;
-}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    --success: #22C55E;
+    --warning: #F59E0B;
 
-body {
-    font-family: "Inter", sans-serif;
+    --radius: 18px;
 
-    background: var(--background);
+    --shadow:
+        0 10px 30px rgba(0,0,0,.08);
 
-    color: var(--text);
-
-    line-height: 1.6;
-}
-.logo-link {
-    
-    text-decoration: none;
-}
-
-.logo-text {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.5px;
-    transition: color var(--transition);
-}
-
-.logo-text:hover {
-    color: var(--primary);
-}
-
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 1.3rem 6rem;
-
-    background: var(--surface);
-
-    box-shadow: var(--shadow);
-}
-
-.nav-links {
-    display: flex;
-    gap: 2rem;
-    list-style: none;
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 500;
-
-    padding: .5rem 0;
-
-    position: relative;
-
-    transition: color var(--transition);
-}
-
-.nav-links a:hover {
-    color: var(--primary);
-}
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-
-.btn {
-    text-decoration: none;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: .45rem;
-
-    padding: .85rem 1.5rem;
-
-    border-radius: var(--radius);
-
-    font-weight: 600;
-
-    transition:
-        background-color var(--transition),
-        color var(--transition),
-        transform var(--transition),
-        box-shadow var(--transition);
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: white;
-
-    box-shadow: var(--shadow);
-}
-
-.btn-primary:hover {
-    background: #1D4ED8;
-
-    transform: translateY(-2px);
-
-    box-shadow: 0 14px 40px rgba(37,99,235,.22);
-}
-
-.btn-outline {
-
-    background: var(--surface);
-
-    color: var(--text);
-
-    border: 1px solid var(--border);
-
-    box-shadow: 0 2px 8px rgba(0,0,0,.04);
-}
-
-.btn-outline:hover {
-
-    color: var(--primary);
-
-    border-color: var(--primary);
-
-    transform: translateY(-2px);
-
-    box-shadow: 0 10px 25px rgba(37,99,235,.12);
-}
-
-.arrow {
-    transition: transform var(--transition);
-}
-
-.btn-primary:hover .arrow {
-    transform: translateX(3px);
-}
-.hero {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    min-height: calc(100vh - 80px);
-
-    padding: 4rem 6rem;
-
-    gap: 6rem;
-
-}
-.hero-left {
-
-    flex: 1;
-
-    max-width: 560px;
-
-}
-.hero-right {
-
-    flex: 1;
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
+    --transition: .25s ease;
 
 }
 
-.hero-badge {
-    margin-bottom: 1.25rem;
+
+/* ==========================================
+   2. GLOBAL RESET
+========================================== */
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
 }
 
-.hero-left h1{
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    font-family:"Inter",sans-serif;
+
+    background:var(--background);
+
+    color:var(--text);
+
+    line-height:1.6;
+
+}
+
+
+/* ==========================================
+   3. GLOBAL ELEMENTS
+========================================== */
+
+img{
+
+    max-width:100%;
+    display:block;
+
+}
+
+a{
+
+    text-decoration:none;
+
+}
+
+button{
+
+    font-family:inherit;
+
+    cursor:pointer;
+
+    border:none;
+
+}
+
+ul{
+
+    list-style:none;
+
+}
+
+section{
+
+    padding:6rem 8%;
+
+}
+/* ==========================================
+   4. NAVIGATION
+========================================== */
+
+nav{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:1.3rem 8%;
+
+    background:var(--surface);
+
+    box-shadow:var(--shadow);
+
+}
+
+.logo-link{
+
+    color:var(--text);
+
+}
+
+.logo-text{
+
+    font-size:1.6rem;
+
+    font-weight:700;
+
+    letter-spacing:-1px;
+
+}
+
+.nav-links{
+
+    display:flex;
+
+    gap:2.5rem;
+
+}
+
+.nav-links a{
+
+    color:var(--text);
+
+    font-weight:500;
+
+    transition:var(--transition);
+
+}
+
+.nav-links a:hover{
+
+    color:var(--primary);
+
+}
+
+.nav-actions{
+
+    display:flex;
+
+    gap:1rem;
+
+}
+/* ==========================================
+   5. BUTTONS
+========================================== */
+
+.btn{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:.5rem;
+
+    padding:.9rem 1.6rem;
+
+    border-radius:14px;
+
+    font-weight:600;
+
+    transition:var(--transition);
+
+}
+
+.btn-primary{
+
+    background:var(--primary);
+
+    color:white;
+
+    box-shadow:var(--shadow);
+
+}
+
+.btn-primary:hover{
+
+    background:var(--primary-dark);
+
+    transform:translateY(-2px);
+
+}
+
+.btn-outline{
+
+    background:white;
+
+    color:var(--text);
+
+    border:1px solid var(--border);
+
+}
+
+.btn-outline:hover{
+
+    border-color:var(--primary);
+
+    color:var(--primary);
+
+}
+/* ==========================================
+   6. HERO
+========================================== */
+
+.hero{
+
+    min-height:calc(100vh - 80px);
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    align-items:center;
+
+    gap:6rem;
+
+}
+
+.hero-left{
+
+    max-width:560px;
+
+}
+
+.hero-right{
+
+    display:flex;
+
+    justify-content:center;
+
+}
+/* ==========================================
+   7. HERO CONTENT
+========================================== */
+
+.hero-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:.6rem;
+
+    background:#EEF4FF;
+
+    color:var(--primary);
+
+    padding:.6rem 1rem;
+
+    border-radius:999px;
+
+    font-weight:600;
+
+    margin-bottom:2rem;
+
+}
+
+.badge-dot{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:50%;
+
+    background:var(--success);
+
+}
+
+.hero-title{
 
     font-size:5rem;
 
@@ -194,20 +306,20 @@ nav {
 
     letter-spacing:-3px;
 
-    margin:1rem 0;
+    margin-bottom:2rem;
+
 }
 
 .hero-description{
 
     font-size:1.15rem;
 
-    line-height:1.8;
-
     color:var(--text-light);
 
-    max-width:500px;
-
     margin-bottom:2.5rem;
+
+    max-width:520px;
+
 }
 
 .hero-buttons{
@@ -215,137 +327,160 @@ nav {
     display:flex;
 
     gap:1rem;
-}
-
-
-.hero-badge {
-
-    display: inline-flex;
-
-    align-items: center;
-
-    gap: .6rem;
-
-    background:#F4F7FF;
-
-    color: var(--primary);
-
-    padding: .6rem 1rem;
-
-    border-radius: 999px;
-
-    font-size: .95rem;
-
-    font-weight: 600;
-
-    margin-bottom: 1.5rem;
 
 }
-.workspace-status .badge-dot {
+/* ==========================================
+   8. FLORA WORKSPACE
+========================================== */
 
-    width: 8px;
+.study-workspace{
 
-    height: 8px;
+    width:100%;
 
-}
-.study-workspace {
+    max-width:480px;
 
-    width: 100%;
+    background:var(--surface);
 
-    max-width: 460px;
+    border:1px solid var(--border);
 
-    background: var(--surface);
+    border-radius:24px;
 
-    border: 1px solid var(--border);
+    overflow:hidden;
 
-    border-radius: 24px;
-
-    box-shadow: var(--shadow);
-
-    overflow: hidden;
+    box-shadow:var(--shadow);
 
 }
-.workspace-header {
+.workspace-header{
 
-    display: flex;
+    display:flex;
 
-    justify-content: space-between;
+    justify-content:space-between;
 
-    align-items: center;
+    align-items:center;
 
-    padding: 1.25rem 1.5rem;
+    padding:1.5rem;
 
-    border-bottom: 1px solid var(--border);
-
-}
-.workspace-section {
-
-    padding: 1.5rem;
-
-    border-bottom: 1px solid var(--border);
+    border-bottom:1px solid var(--border);
 
 }
-.section-title {
 
-    font-size: 1rem;
+.workspace-header h3{
 
-    font-weight: 600;
+    font-size:1.3rem;
 
-    margin-bottom: .8rem;
-
-}
-.flashcard-question {
-
-    color: var(--text-light);
-
-    line-height: 1.7;
-
-    margin-bottom: 1rem;
+    font-weight:700;
 
 }
-.reveal-btn {
 
-    background: #EEF4FF;
+.workspace-status{
 
-    color: var(--primary);
+    color:var(--success);
 
-    border: none;
+    font-size:.95rem;
 
-    border-radius: 10px;
-
-    padding: .7rem 1rem;
-
-    cursor: pointer;
-
-    font-weight: 600;
-
-    transition: all var(--transition);
+    font-weight:500;
 
 }
-.reveal-btn:hover {
+.workspace-section{
 
-    background: var(--primary);
+    padding:1.5rem;
 
-    color: white;
-
-}
-.workspace-header h3 {
-
-    font-size: 1.1rem;
-
-    font-weight: 700;
+    border-bottom:1px solid var(--border);
 
 }
-.workspace-status {
 
-    display: flex;
+.workspace-section:last-child{
 
-    align-items: center;
+    border-bottom:none;
 
-    gap: .5rem;
+}
+.section-title{
 
-    color: var(--text-light);
+    font-size:1rem;
 
-    font-size: .9rem;
+    font-weight:700;
+
+    margin-bottom:1rem;
+
+}
+.reveal-btn{
+
+    background:#EEF4FF;
+
+    color:var(--primary);
+
+    padding:.8rem 1.2rem;
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    transition:var(--transition);
+
+}
+
+.reveal-btn:hover{
+
+    background:var(--primary);
+
+    color:white;
+
+}
+.quiz-options{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:.75rem;
+
+    margin-top:1rem;
+
+}
+
+.quiz-options li{
+
+    padding:.8rem 1rem;
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    transition:var(--transition);
+
+}
+
+.quiz-options li:hover{
+
+    border-color:var(--primary);
+
+    background:#EEF4FF;
+
+}
+.progress-bar{
+
+    width:100%;
+
+    height:10px;
+
+    background:#E5E7EB;
+
+    border-radius:999px;
+
+    margin-top:1rem;
+
+    overflow:hidden;
+
+}
+
+.progress-fill{
+
+    width:72%;
+
+    height:100%;
+
+    background:var(--primary);
+
+    border-radius:999px;
 
 }
