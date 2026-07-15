@@ -534,6 +534,8 @@ nav{
 }
 .feature-card{
 
+    min-height: 250px;
+
     background:var(--surface);
 
     border:1px solid var(--border);
@@ -549,6 +551,8 @@ nav{
 
     transform:translateY(-8px);
 
+    transform: scale(1.08);
+
     box-shadow:var(--shadow);
 
     border-color:var(--primary);
@@ -559,6 +563,8 @@ nav{
     width:60px;
 
     height:60px;
+
+    transition: transform .25s ease;
 
     display:flex;
 
