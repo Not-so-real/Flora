@@ -484,3 +484,109 @@ nav{
     border-radius:999px;
 
 }
+/* ==========================================
+   9. FEATURES
+========================================== */
+
+#features{
+
+    background:var(--background);
+
+}
+
+.section-heading{
+
+    text-align:center;
+
+    max-width:700px;
+
+    margin:0 auto 4rem;
+
+}
+
+.section-heading h2{
+
+    font-size:3rem;
+
+    line-height:1.2;
+
+    margin-bottom:1rem;
+
+    letter-spacing:-2px;
+
+}
+
+.section-heading p{
+
+    color:var(--text-light);
+
+    font-size:1.1rem;
+
+}
+.features-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:2rem;
+
+}
+.feature-card{
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:2rem;
+
+    transition:all var(--transition);
+
+}
+.feature-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:var(--shadow);
+
+    border-color:var(--primary);
+
+}
+.feature-icon{
+
+    width:60px;
+
+    height:60px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:1.6rem;
+
+    background:#EEF4FF;
+
+    border-radius:16px;
+
+    margin-bottom:1.5rem;
+
+}
+.feature-card h3{
+
+    margin-bottom:.75rem;
+
+    font-size:1.3rem;
+
+}
+
+.feature-card p{
+
+    color:var(--text-light);
+
+    line-height:1.7;
+
+}
