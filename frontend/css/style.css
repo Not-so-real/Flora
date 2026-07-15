@@ -596,3 +596,87 @@ nav{
     line-height:1.7;
 
 }
+/* ==========================================
+   10. LEARNING JOURNEY
+========================================== */
+
+#learning-journey{
+
+    padding:6rem 8%;
+
+}
+.journey-container{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    justify-content:space-between;
+
+    gap:1.5rem;
+
+    margin-top:4rem;
+
+}
+.journey-step{
+
+    flex:1;
+
+    text-align:center;
+
+}
+.step-badge{
+
+    width:42px;
+
+    height:42px;
+
+    margin:0 auto 1rem;
+
+    border-radius:50%;
+
+    background:#EEF4FF;
+
+    color:var(--primary);
+
+    font-weight:700;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+.step-icon{
+
+    font-size:2.5rem;
+
+    margin-bottom:1rem;
+
+}
+.journey-step h3{
+
+    margin-bottom:.75rem;
+
+    font-size:1.25rem;
+
+}
+.journey-step p{
+
+    color:var(--text-light);
+
+    line-height:1.7;
+
+}
+.journey-line{
+
+    flex:0 0 60px;
+
+    height:2px;
+
+    background:var(--border);
+
+    margin-top:72px;
+
+}
