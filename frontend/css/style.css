@@ -318,7 +318,7 @@ nav{
 
     margin-bottom:2.5rem;
 
-    max-width:520px;
+    max-width:500px;
 
 }
 
@@ -347,7 +347,8 @@ nav{
 
     overflow:hidden;
 
-    box-shadow:var(--shadow);
+    box-shadow:
+    0 15px 45px rgba(0,0,0,.08);
 
 }
 .workspace-header{
@@ -714,7 +715,7 @@ nav{
 
 .audience-tag:hover{
 
-    transform:translateY(-3px);
+    transform:translateY(-6px);
 
     box-shadow:var(--shadow);
 
@@ -836,7 +837,7 @@ nav{
 }
 .faq-item:hover{
 
-    transform: translateY(-3px);
+    transform: translateY(-6px);
 
     box-shadow: var(--shadow);
 
@@ -855,7 +856,7 @@ nav{
 
     align-items: center;
 
-    padding: 1.5rem;
+    padding-right:2rem;
 
     font-size: 1.05rem;
 
@@ -893,5 +894,89 @@ nav{
 .faq-item.active .faq-icon{
 
     transform:rotate(45deg);
+
+}
+/* ==========================================
+   13. FINAL CTA
+========================================== */
+
+#cta{
+
+    padding:8rem 8%;
+
+}
+.cta-container{
+
+    max-width:900px;
+
+    margin:0 auto;
+
+    background:#F5F9FF;
+
+    border:1px solid var(--border);
+
+    border-radius:28px;
+
+    padding:5rem 3rem;
+
+    text-align:center;
+
+}
+.cta-container h2{
+
+    font-size:3rem;
+
+    line-height:1.2;
+
+    margin-bottom:1.5rem;
+
+    letter-spacing:-2px;
+
+}
+.cta-container p{
+
+    max-width:650px;
+
+    margin:0 auto 2rem;
+
+    color:var(--text-light);
+
+    line-height:1.8;
+
+    font-size:1.1rem;
+
+}
+.cta-note{
+
+    display:block;
+
+    margin-top:1.5rem;
+
+    color:var(--text-light);
+
+    font-size:.95rem;
+
+}
+/* ==========================================
+   Responsive Design
+========================================== */
+
+/* Large Laptops */
+@media (max-width: 1440px){
+
+}
+
+/* Tablets */
+@media (max-width: 1024px){
+
+}
+
+/* Small Tablets */
+@media (max-width: 768px){
+
+}
+
+/* Mobile */
+@media (max-width: 480px){
 
 }
