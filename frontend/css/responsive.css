@@ -1,0 +1,27 @@
+/* ==========================================
+   Responsive Styles
+========================================== */
+
+/* Large Laptops */
+
+@media (max-width: 1440px){
+
+}
+
+/* Tablets */
+
+@media (max-width: 1024px){
+
+}
+
+/* Small Tablets */
+
+@media (max-width: 768px){
+
+}
+
+/* Mobile */
+
+@media (max-width: 480px){
+
+}
