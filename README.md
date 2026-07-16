@@ -1,2 +1,13 @@
-# AI-Study-Platform
-An AI-powered study platform that helps students organize notes, generate quizzes, create flashcards, summarize documents, and track learning progress.
+Flora
+Your Personal AI Tutor
+
+Transform your study materials into smart summaries,
+flashcards, quizzes and personalized learning paths.
+
+Features
+Installation
+Roadmap
+Screenshots
+Tech Stack
+Contributing
+License
