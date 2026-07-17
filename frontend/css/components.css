@@ -1,0 +1,70 @@
+.study-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+}
+.tool-card{
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 20px;
+
+    padding: 32px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    text-align: center;
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+
+    cursor: pointer;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.tool-icon{
+    font-size: 3rem;
+    margin-bottom: 20px;
+    transition: transform .3s ease;
+}
+.tool-card h3{
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+}
+.tool-card p{
+    color: #6B7280;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+.tool-card:hover{
+    transform: translateY(-8px);
+
+    box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+
+    border-color: var(--primary-color);
+}
+.tool-link{
+    text-decoration: none;
+
+    font-weight: 600;
+
+    color: var(--primary-color);
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    transition: all .3s ease;
+}
+.tool-card:hover .tool-link{
+
+    transform: scale(1.12);
+    
+
+}
