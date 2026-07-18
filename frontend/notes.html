@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | My Notes</title>
+
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/notes.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body>
+
+    <header>
+        <!-- Navbar will go here later -->
+    </header>
+
+    <main class="notes-page">
+
+        <!-- ================= Sidebar ================= -->
+
+        <aside class="notes-sidebar">
+
+            <div class="sidebar-header">
+
+                <h2>My Notes</h2>
+                <p>Organize everything in one place.</p>
+
+                <button class="primary-btn">
+                    + New Note
+                </button>
+
+            </div>
+
+            <div class="search-box">
+
+                <input
+                    type="text"
+                    placeholder="Search notes..."
+                >
+
+            </div>
+
+            <div class="notes-list">
+
+                <div class="note-card active">
+
+                    <h3>📘 Data Structures</h3>
+
+                    <p>Last edited 2 hours ago</p>
+
+                </div>
+
+                <div class="note-card">
+
+                    <h3>🌳 Trees</h3>
+
+                    <p>Yesterday</p>
+
+                </div>
+
+                <div class="note-card">
+
+                    <h3>🔗 Linked Lists</h3>
+
+                    <p>3 days ago</p>
+
+                </div>
+
+                <div class="note-card">
+
+                    <h3>⚡ Algorithms</h3>
+
+                    <p>Last week</p>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+        <!-- ================= Editor ================= -->
+
+        <section class="notes-editor">
+
+            <div class="editor-header">
+
+                <div>
+
+                    <h1 class="note-title">
+                        📘 Data Structures
+                    </h1>
+
+                    <p class="note-meta">
+                        Last edited 2 hours ago
+                    </p>
+
+                </div>
+
+                <button class="primary-btn">
+                    💾 Save Note
+                </button>
+
+            </div>
+
+            <!-- Toolbar -->
+
+            <div class="editor-toolbar">
+
+                <button class="toolbar-btn"><strong>B</strong></button>
+
+                <button class="toolbar-btn"><em>I</em></button>
+
+                <button class="toolbar-btn"><u>U</u></button>
+
+                <button class="toolbar-btn">H1</button>
+
+                <button class="toolbar-btn">H2</button>
+
+                <button class="toolbar-btn">• List</button>
+
+                <button class="toolbar-btn">1. List</button>
+
+                <button class="toolbar-btn">&lt;/&gt;</button>
+
+            </div>
+
+            <!-- Editor -->
+
+            <textarea
+                class="note-editor"
+                placeholder="Start typing...
+
+Type '/' to access AI commands."
+            ></textarea>
+
+            <!-- AI Assistant -->
+
+            <div class="ai-tools">
+
+                
+
+                <div class="ai-buttons">
+
+                    <button class="tool-btn">
+                        ✨ Summarize
+                    </button>
+
+                    <button class="tool-btn">
+                        🧠 Flashcards
+                    </button>
+
+                    <button class="tool-btn">
+                        ❓ Quiz
+                    </button>
+
+                    <button class="tool-btn">
+                        💡 Explain
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

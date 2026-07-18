@@ -52,7 +52,7 @@
 
     font-weight: 600;
 
-    color: var(--primary-color);
+    color: var(--color-primary);
 
     display: inline-flex;
 
@@ -66,5 +66,41 @@
 
     transform: scale(1.12);
     
+
+}
+.primary-btn{
+
+    background: var(--color-primary);
+
+    color: white;
+
+    border: none;
+
+    padding: 14px 24px;
+
+    border-radius: 12px;
+
+    font-size: 0.95rem;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform .3s ease,
+        box-shadow .3s ease,
+        background .3s ease;
+
+}
+.primary-btn:hover{
+
+    transform: translateY(-3px);
+
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+
+}
+.primary-btn:active{
+
+    transform: translateY(0);
 
 }
