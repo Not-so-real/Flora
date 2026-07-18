@@ -29,8 +29,12 @@
                 <h2>My Notes</h2>
                 <p>Organize everything in one place.</p>
 
-                <button class="primary-btn">
+                <button
+                    class="primary-btn"
+                    id="new-note-btn">
+
                     + New Note
+
                 </button>
 
             </div>
@@ -44,39 +48,10 @@
 
             </div>
 
-            <div class="notes-list">
+            <div 
+                class="notes-list"
+                id="notes-list">
 
-                <div class="note-card active">
-
-                    <h3>📘 Data Structures</h3>
-
-                    <p>Last edited 2 hours ago</p>
-
-                </div>
-
-                <div class="note-card">
-
-                    <h3>🌳 Trees</h3>
-
-                    <p>Yesterday</p>
-
-                </div>
-
-                <div class="note-card">
-
-                    <h3>🔗 Linked Lists</h3>
-
-                    <p>3 days ago</p>
-
-                </div>
-
-                <div class="note-card">
-
-                    <h3>⚡ Algorithms</h3>
-
-                    <p>Last week</p>
-
-                </div>
 
             </div>
 
@@ -90,7 +65,8 @@
 
                 <div>
 
-                    <h1 class="note-title">
+                    <h1 class="note-title"
+                        id="note-title">    
                         📘 Data Structures
                     </h1>
 
@@ -120,9 +96,7 @@
 
                 <button class="toolbar-btn">H2</button>
 
-                <button class="toolbar-btn">• List</button>
-
-                <button class="toolbar-btn">1. List</button>
+                <button class="toolbar-btn">• </button>
 
                 <button class="toolbar-btn">&lt;/&gt;</button>
 
@@ -132,6 +106,7 @@
 
             <textarea
                 class="note-editor"
+                id="note-editor"
                 placeholder="Start typing...
 
 Type '/' to access AI commands."
@@ -168,7 +143,7 @@ Type '/' to access AI commands."
         </section>
 
     </main>
-
+    <script src="js/notes.js"></script>
 </body>
 
 </html>
