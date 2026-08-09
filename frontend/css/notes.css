@@ -428,3 +428,58 @@
     margin-bottom: 24px;
 
 }
+.note-card{
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+.note-content{
+
+    min-width: 2;
+
+}
+.delete-note-btn {
+
+    border: none;
+
+    background: transparent;
+
+    padding: 10px;
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    font-size: 1.15rem;
+
+    cursor: pointer;
+
+    opacity: 1;
+
+    transition:
+        background .25s ease,
+        transform .2s ease,
+        opacity .25s ease;
+
+}
+.delete-note-btn:hover {
+
+    background: #FEE2E2;
+
+    transform: scale(1.08);
+
+}
+.delete-note-btn:hover{
+
+    background: #FEE2E2;
+
+}
