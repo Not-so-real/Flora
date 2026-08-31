@@ -1,19 +1,40 @@
+html, body{
+
+    overflow-x: hidden;
+
+    margin: 0;
+
+    max-width: 100%;
+
+}
+*, *::before, *::after{
+
+    box-sizing: border-box;
+
+}
+
 .notes-page{
 
     display: grid;
 
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 260px 1fr;
 
-    min-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
 
 }
 .notes-sidebar{
 
+    box-sizing: border-box;
+
     border-right: 1px solid #E5E7EB;
 
-    padding: 32px 4px;
+    padding: 32px 16px;
+
+    height: 100%;
 
     overflow-y: auto;
+
+    overflow-x: hidden;
 
     background: white;
 
@@ -21,6 +42,10 @@
 .notes-editor{
 
     padding: 16px;
+
+    overflow-y: auto;
+
+    height: 100%;
 
 }
 .empty-state{
@@ -82,6 +107,12 @@
 }
 .note-card{
 
+    box-sizing: border-box;
+
+    width: 100%;
+
+    max-width: 100%;
+
     padding: 18px;
 
     border: 1px solid var(--color-border);
@@ -93,6 +124,8 @@
     transition: all .3s ease;
 
     background: white;
+
+    overflow: hidden;
 
 }
 .note-card.active{
@@ -117,12 +150,20 @@
 
     font-size: 1rem;
 
+    word-break: break-word;
+
+    overflow-wrap: break-word;
+
 }
 .note-card p{
 
     color: var(--color-text-secondary);
 
     font-size: .9rem;
+
+    word-break: break-word;
+
+    overflow-wrap: break-word;
 
 }
 .search-box{
@@ -481,5 +522,16 @@
 .delete-note-btn:hover{
 
     background: #FEE2E2;
+
+}
+.note-search-empty{
+
+    color: var(--color-text-secondary);
+
+    text-align: center;
+
+    padding: 24px 8px;
+
+    font-size: .9rem;
 
 }
