@@ -1,277 +1,225 @@
-const SUBJECTS_STORAGE_KEY = "flora-subjects";
-const CURRENT_SUBJECT_KEY = "flora-current-subject";
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/animations.css">
+<body>
 
-const subjectsGrid = document.getElementById("subjects-grid");
-const newSubjectBtn = document.getElementById("new-subject-btn");
-const subjectDialog = document.getElementById("subject-dialog");
-const subjectForm = document.getElementById("subject-form");
-const subjectDialogTitle = document.getElementById("subject-dialog-title");
-const subjectDialogClose = document.getElementById("subject-dialog-close");
-const subjectCancelBtn = document.getElementById("subject-cancel-btn");
-const subjectSaveBtn = document.getElementById("subject-save-btn");
-const subjectIdInput = document.getElementById("subject-id");
-const subjectNameInput = document.getElementById("subject-name");
-const subjectDescriptionInput = document.getElementById("subject-description");
-const subjectFormError = document.getElementById("subject-form-error");
+    <div class="dashboard">
 
-let subjects = loadSubjects();
+        <aside class="sidebar">
 
-newSubjectBtn.addEventListener("click", () => openSubjectDialog());
-subjectDialogClose.addEventListener("click", closeSubjectDialog);
-subjectCancelBtn.addEventListener("click", closeSubjectDialog);
-subjectForm.addEventListener("submit", saveSubjectFromForm);
+    <div class="sidebar-logo">
 
-subjectDialog.addEventListener("click", event => {
-    if (event.target === subjectDialog) {
-        closeSubjectDialog();
-    }
-});
+        <h2>Flora</h2>
 
-renderSubjects();
+    </div>
 
-function loadSubjects() {
-    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
+    <nav class="sidebar-nav">
 
-    if (raw !== null) {
-        try {
-            const storedSubjects = JSON.parse(raw);
-            if (Array.isArray(storedSubjects)) {
-                return storedSubjects.map(normalizeSubject).filter(Boolean);
-            }
-        } catch (error) {
-            console.error("Could not load subjects:", error);
-        }
-    }
+        <a href="#" class="nav-item active">Dashboard</a>
 
-    const starterSubject = {
-        id: "computer-science",
-        name: "Computer Science",
-        description: "Data structures, algorithms, and programming fundamentals.",
-        completedChapters: 14,
-        totalChapters: 18,
-        currentTopic: "Data Structures",
-        currentChapter: "Chapter 4: Trees",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-    };
+        <a href="#" class="nav-item">Subjects</a>
 
-    localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify([starterSubject]));
-    return [starterSubject];
-}
+        <a href="#" class="nav-item">Notes</a>
 
-function normalizeSubject(subject) {
-    if (!subject || typeof subject !== "object" || !subject.id || !subject.name) {
-        return null;
-    }
+        <a href="#" class="nav-item">Flashcards</a>
 
-    const id = String(subject.id);
+        <a href="#" class="nav-item">Quizzes</a>
 
-    return {
-        id,
-        name: String(subject.name).trim(),
-        description: String(subject.description || "").trim(),
-        completedChapters: Math.max(0, Number(subject.completedChapters) || 0),
-        totalChapters: Math.max(0, Number(subject.totalChapters) || 0),
-        currentTopic: String(subject.currentTopic || (id === "computer-science" ? "Data Structures" : "")).trim(),
-        currentChapter: String(subject.currentChapter || (id === "computer-science" ? "Chapter 4: Trees" : "")).trim(),
-        createdAt: Number(subject.createdAt) || Date.now(),
-        updatedAt: Number(subject.updatedAt) || Date.now()
-    };
-}
+        <a href="#" class="nav-item">Planner</a>
 
-function saveSubjects() {
-    localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify(subjects));
-}
+        <a href="#" class="nav-item">Progress</a>
 
-function createSubjectId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
-    }
+        <a href="#" class="nav-item">Settings</a>
 
-    return `subject-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
+    </nav>
 
-function openSubjectDialog(subject = null) {
-    subjectForm.reset();
-    subjectFormError.textContent = "";
-    subjectIdInput.value = subject ? subject.id : "";
-    subjectNameInput.value = subject ? subject.name : "";
-    subjectDescriptionInput.value = subject ? subject.description : "";
-    subjectDialogTitle.textContent = subject ? "Rename subject" : "Create a subject";
-    subjectSaveBtn.textContent = subject ? "Save Changes" : "Create Subject";
+    <div class="sidebar-profile">
 
-    subjectDialog.showModal();
-    subjectNameInput.focus();
-}
+        <h4>Shivam</h4>
 
-function closeSubjectDialog() {
-    subjectDialog.close();
-    subjectFormError.textContent = "";
-}
+        <p>Student</p>
 
-function saveSubjectFromForm(event) {
-    event.preventDefault();
+    </div>
 
-    const id = subjectIdInput.value;
-    const name = subjectNameInput.value.trim();
-    const description = subjectDescriptionInput.value.trim();
+</aside>
 
-    if (!name) {
-        subjectFormError.textContent = "Enter a subject name.";
-        subjectNameInput.focus();
-        return;
-    }
+        <main class="main-content">
+            <section class="dashboard-header">
 
-    const duplicate = subjects.some(subject =>
-        subject.id !== id && subject.name.toLowerCase() === name.toLowerCase()
-    );
+    <h1>Good Afternoon, Guest User 👋</h1>
 
-    if (duplicate) {
-        subjectFormError.textContent = "A subject with this name already exists.";
-        subjectNameInput.focus();
-        return;
-    }
+    <p>Let's continue your learning journey.</p>
 
-    if (id) {
-        const subject = subjects.find(item => item.id === id);
-        if (!subject) return;
+</section>
 
-        subject.name = name;
-        subject.description = description;
-        subject.updatedAt = Date.now();
-    } else {
-        subjects.push({
-            id: createSubjectId(),
-            name,
-            description,
-            completedChapters: 0,
-            totalChapters: 0,
-            currentTopic: "",
-            currentChapter: "",
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-        });
-    }
+<section class="stats-grid">
 
-    saveSubjects();
-    closeSubjectDialog();
-    renderSubjects();
-}
+    <div class="card stat-card">
 
-function deleteSubject(subject) {
-    const confirmed = confirm(
-        `Delete "${subject.name}"?\n\nThis removes the subject from your dashboard. This cannot be undone.`
-    );
+        <h3>Study Streak</h3>
 
-    if (!confirmed) return;
+        <h2>14</h2>
 
-    subjects = subjects.filter(item => item.id !== subject.id);
+        <p>Days in a row</p>
 
-    if (localStorage.getItem(CURRENT_SUBJECT_KEY) === subject.id) {
-        localStorage.removeItem(CURRENT_SUBJECT_KEY);
-    }
+    </div>
 
-    saveSubjects();
-    renderSubjects();
-}
+    <div class="stat-card">
 
-function getProgress(subject) {
-    if (!subject.totalChapters) return 0;
-    return Math.min(100, Math.round((subject.completedChapters / subject.totalChapters) * 100));
-}
+        <h3>Flashcards</h3>
 
-function renderSubjects() {
-    subjectsGrid.innerHTML = "";
+        <h2>248</h2>
 
-    if (subjects.length === 0) {
-        const emptyState = document.createElement("div");
-        emptyState.className = "subjects-empty-state";
+        <p>Reviewed this week</p>
 
-        const heading = document.createElement("h3");
-        heading.textContent = "No subjects yet";
+    </div>
 
-        const message = document.createElement("p");
-        message.textContent = "Create your first subject to begin organizing your study material.";
+    <div class="stat-card">
 
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "primary-btn";
-        button.textContent = "Create Subject";
-        button.addEventListener("click", () => openSubjectDialog());
+        <h3>Quiz Accuracy</h3>
 
-        emptyState.append(heading, message, button);
-        subjectsGrid.appendChild(emptyState);
-        return;
-    }
+        <h2>92%</h2>
 
-    subjects.forEach(subject => {
-        const progress = getProgress(subject);
-        const card = document.createElement("article");
-        card.className = "card subject-card";
+        <p>Average score</p>
 
-        const badge = document.createElement("span");
-        badge.className = "subject-badge";
-        badge.textContent = subject.name;
+    </div>
 
-        const description = document.createElement("p");
-        description.className = "subject-description";
-        description.textContent = subject.description || "No description yet.";
+    <div class="stat-card">
 
-        const progressSection = document.createElement("div");
-        progressSection.className = "subject-progress-section";
+        <h3>Study Time</h3>
 
-        const progressHeader = document.createElement("div");
-        progressHeader.className = "progress-header";
-        const progressLabel = document.createElement("span");
-        progressLabel.textContent = "Progress";
-        const progressPercent = document.createElement("span");
-        progressPercent.className = "progress-percent";
-        progressPercent.textContent = `${progress}%`;
-        progressHeader.append(progressLabel, progressPercent);
+        <h2>12h 30m</h2>
 
-        const progressBar = document.createElement("div");
-        progressBar.className = "progress-bar";
-        const progressFill = document.createElement("div");
-        progressFill.className = "progress-fill";
-        progressFill.style.width = `${progress}%`;
-        progressBar.appendChild(progressFill);
-        progressSection.append(progressHeader, progressBar);
+        <p>This week</p>
 
-        const chapters = document.createElement("p");
-        chapters.className = "chapters-completed";
-        chapters.textContent = subject.totalChapters
-            ? `${subject.completedChapters} / ${subject.totalChapters} Chapters Completed`
-            : "No chapters added yet";
+    </div>
 
-        const footer = document.createElement("div");
-        footer.className = "subject-footer";
+</section>
+<section class="continue-section">
 
-        const openLink = document.createElement("a");
-        openLink.className = "open-subject";
-        openLink.href = `subject.html?id=${encodeURIComponent(subject.id)}`;
-        openLink.textContent = "Open Subject ->";
-        openLink.addEventListener("click", () => {
-            localStorage.setItem(CURRENT_SUBJECT_KEY, subject.id);
-        });
+    <h2 class="section-heading">
+        Continue Studying
+    </h2>
 
-        const actions = document.createElement("div");
-        actions.className = "subject-actions";
+    <div class="card learning-card">
 
-        const renameButton = document.createElement("button");
-        renameButton.type = "button";
-        renameButton.className = "subject-action-btn";
-        renameButton.textContent = "Rename";
-        renameButton.addEventListener("click", () => openSubjectDialog(subject));
+        <div class="learning-info">
 
-        const deleteButton = document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.className = "subject-action-btn danger";
-        deleteButton.textContent = "Delete";
-        deleteButton.addEventListener("click", () => deleteSubject(subject));
+            <span class="subject-badge">
+                Computer Science
+            </span>
 
-        actions.append(renameButton, deleteButton);
-        footer.append(openLink, actions);
-        card.append(badge, description, progressSection, chapters, footer);
-        subjectsGrid.appendChild(card);
-    });
-}
+            <h3>Data Structures</h3>
+
+            <p class="chapter-title">
+                Chapter 4 • Trees
+            </p>
+
+            <div class="progress-header">
+
+                <span>Progress</span>
+
+                <span class="progress-percent">
+                    80%
+                </span>
+
+            </div>
+
+            <div class="progress-bar">
+
+                <div class="progress-fill"></div>
+
+            </div>
+
+            <div class="learning-meta">
+
+                <span>5 Chapters Remaining</span>
+
+                <span>Last Studied • Today, 2 hours ago</span>
+
+            </div>
+
+        </div>
+
+        <div class="learning-action">
+
+            <button class="continue-btn">
+
+                Continue Studying →
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="subjects-section">
+
+    <div class="section-header">
+
+        <h2>All Subjects</h2>
+
+        <p>
+            Choose a subject to continue your learning.
+        </p>
+
+    </div>
+
+    <div class="subjects-grid">
+
+        <!-- Subject Cards -->
+
+    </div>
+
+</section>
+<div class="card subject-card">
+
+    <span class="subject-badge">
+        Computer Science
+    </span>
+
+    <div class="progress-section">
+
+        <div class="progress-header">
+
+            <span>Progress</span>
+
+            <span class="progress-percent">
+                80%
+            </span>
+
+        </div>
+
+        <div class="progress-bar">
+
+            <div class="progress-fill"></div>
+
+        </div>
+
+    </div>
+
+    <p class="chapters-completed">
+
+        14 / 18 Chapters Completed
+
+    </p>
+
+    <div class="subject-footer">
+
+        <span class="open-subject">
+
+            → Open Subject
+
+        </span>
+
+    </div>
+
+</div>
+        </main>
+
+    </div>
+
+</body>
