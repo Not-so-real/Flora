@@ -20,7 +20,7 @@
 
     <main class="notes-page">
 
-        <!-- ================= Sidebar ================= -->
+        <!-- ============== Sidebar ============== -->
 
         <aside class="notes-sidebar">
 
@@ -29,154 +29,130 @@
                 <h2>My Notes</h2>
                 <p>Organize everything in one place.</p>
 
-                <button
-                    class="primary-btn"
-                    id="new-note-btn">
-
+                <button class="primary-btn" id="new-note-btn">
                     + New Note
-
                 </button>
 
+            </div>
+
+            <!-- Folders -->
+            <div class="folders-section">
+                <div class="folders-header">
+                    <h3>My Folders</h3>
+                </div>
+                <div class="folders-list" id="folders-list"></div>
+                <input type="text" id="new-folder-input" class="new-folder-input" placeholder="+ New folder">
             </div>
 
             <div class="search-box">
-
-                <input
-                    type="text"
-                    id="note-search"
-                    placeholder="Search notes..."
-                >
-
+                <input type="text" id="note-search" placeholder="Search notes...">
             </div>
 
-            <div 
-                class="notes-list"
-                id="notes-list">
-
-
-            </div>
+            <div class="notes-list" id="notes-list"></div>
 
         </aside>
 
-        <!-- ================= Editor ================= -->
+        <!-- ============== Editor ============== -->
 
-    <section class="notes-editor">
+        <section class="notes-editor">
 
-        <!-- Note Header -->
+            <!-- Note Header -->
 
-        <div class="editor-header">
+            <div class="editor-header">
 
-            <div class="editor-title-block">
+                <div class="editor-title-block">
 
-                <h2 id="note-title">
-                    📝 No Note Selected
-                </h2>
+                    <h2 id="note-title">
+                        📝 No Note Selected
+                    </h2>
 
-                <span
-                    id="save-status"
-                    class="save-status hidden">
-                </span>
+                    <span id="save-status" class="save-status hidden"></span>
+
+                </div>
 
             </div>
 
-        </div>
 
+            <!-- Formatting Toolbar -->
 
-        <!-- Formatting Toolbar -->
+            <div class="editor-toolbar">
 
-        <div class="editor-toolbar">
-
-            <button
-                class="toolbar-btn"
-                data-command="bold"
-                title="Bold (Ctrl+B)">
-                <strong>B</strong>
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="italic"
-                title="Italic (Ctrl+I)">
-                <em>I</em>
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="underline"
-                title="Underline (Ctrl+U)">
-                <u>U</u>
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="formatBlock"
-                data-value="h2"
-                title="Heading">
-                H1
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="formatBlock"
-                data-value="h3"
-                title="Subheading">
-                H2
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="insertUnorderedList"
-                title="Bullet List">
-                • List
-            </button>
-
-            <button
-                class="toolbar-btn"
-                data-command="insertOrderedList"
-                title="Numbered List">
-                1. List
-            </button>
-
-        </div>
-
-
-        <!-- Writing Area -->
-
-        <div
-            class="note-editor"
-            id="note-editor"
-            contenteditable="true"
-            data-placeholder="Start typing your notes here...">
-        </div>
-
-
-        <!-- AI Tools -->
-
-        <div class="ai-tools">
-
-            <div class="ai-buttons">
-
-                <button class="tool-btn">
-                    ✨ Summarize
+                <button class="toolbar-btn" data-command="bold" title="Bold (Ctrl+B)">
+                    <strong>B</strong>
                 </button>
 
-                <button class="tool-btn">
-                    🧠 Flashcards
+                <button class="toolbar-btn" data-command="italic" title="Italic (Ctrl+I)">
+                    <em>I</em>
                 </button>
 
-                <button class="tool-btn">
-                    ❓ Quiz
+                <button class="toolbar-btn" data-command="underline" title="Underline (Ctrl+U)">
+                    <u>U</u>
                 </button>
 
-                <button class="tool-btn">
-                    💡 Explain
+                <button class="toolbar-btn" data-command="formatBlock" data-value="h2" title="Heading">
+                    H1
+                </button>
+
+                <button class="toolbar-btn" data-command="formatBlock" data-value="h3" title="Subheading">
+                    H2
+                </button>
+
+                <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">
+                    • List
+                </button>
+
+                <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">
+                    1. List
                 </button>
 
             </div>
 
-        </div>
+            <!-- Note Meta -->
+            <div class="note-meta-row">
+                <div class="note-folder-select">
+                    <span class="meta-prefix">Folder:</span>
+                    <select id="note-folder-select"></select>
+                </div>
+                <div class="note-chapter-input">
+                    <span class="meta-prefix">Chapter:</span>
+                    <input type="text" id="note-chapter-input" placeholder="e.g. Algebra">
+                </div>
+            </div>
 
-    </section>
+            <!-- Writing Area -->
+
+            <div class="note-editor" id="note-editor" contenteditable="true"
+                data-placeholder="Start typing your notes here...">
+            </div>
+
+
+            <!-- AI Tools -->
+
+            <div class="ai-tools">
+
+                <div class="ai-buttons">
+
+                    <button class="tool-btn">
+                        ✨ Summarize
+                    </button>
+
+                    <button class="tool-btn">
+                        🧠 Flashcards
+                    </button>
+
+                    <button class="tool-btn">
+                        ❓ Quiz
+                    </button>
+
+                    <button class="tool-btn">
+                        💡 Explain
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
 
     </main>
     <script src="js/notes.js"></script>

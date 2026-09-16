@@ -1,7 +1,7 @@
 /* ============================================================
    Flora — Notes Page Styles
-   Covers: layout, sidebar, editor, toolbar, AI tools,
-           navbar, save indicator, timestamps, previews
+   Covers: layout, sidebar, folders, editor, toolbar,
+           note meta, AI tools, save indicator, timestamps
 ============================================================ */
 
 /* ── Base reset for this page ── */
@@ -16,6 +16,13 @@ html, body {
 
 *, *::before, *::after {
     box-sizing: border-box;
+}
+
+/* Placeholder header until the real navbar is added */
+header {
+    height: 64px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
 }
 
 /* ============================================================
@@ -90,41 +97,26 @@ html, body {
 }
 
 .notes-page {
-
     display: grid;
-
     grid-template-columns: 320px minmax(0, 1fr);
-
     height: calc(100vh - 64px);
-
     overflow: hidden;
-
 }
 
 .notes-sidebar {
-
     box-sizing: border-box;
-
     height: 100%;
-
     overflow-y: auto;
-
     overflow-x: hidden;
-
     padding: 28px 20px;
-
     border-right: 1px solid var(--color-border);
-
     background: var(--color-surface);
-
     display: flex;
-
     flex-direction: column;
-
 }
 
 .sidebar-header {
-    margin-bottom: 4px;
+    margin-bottom: 12px;
 }
 
 .sidebar-header h2 {
@@ -164,10 +156,150 @@ html, body {
     transform: translateY(0);
 }
 
+/* ============================================================
+   FOLDERS
+============================================================ */
+.folders-section {
+    margin: 0 0 16px 0;
+}
+
+.folders-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.folders-header h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.icon-btn {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 8px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.icon-btn:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
+.folders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.new-folder-input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border: 1px dashed var(--color-border);
+    border-radius: 10px;
+    background: var(--color-background);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: var(--transition-fast);
+}
+
+.new-folder-input:focus {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: 1px solid transparent;
+    overflow: hidden;
+}
+
+.folder-item > span {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.folder-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: var(--color-background);
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 6px;
+}
+
+.folder-item.active .folder-count {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--color-primary);
+}
+
+.folder-item:hover {
+    background: var(--color-background);
+    border-color: var(--color-border);
+}
+
+.folder-item.active {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
+    font-weight: 600;
+}
+
+.folder-delete-btn {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0;
+    border-radius: 6px;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.folder-item:hover .folder-delete-btn {
+    opacity: 1;
+}
+
+.folder-delete-btn:hover {
+    background: #FEE2E2;
+}
+
 /* ── Search box ── */
 .search-box {
     width: 100%;
-    margin: 16px 0;
+    margin: 0 0 12px 0;
 }
 
 .search-box input {
@@ -198,7 +330,7 @@ html, body {
 .notes-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
 }
 
@@ -321,78 +453,44 @@ html, body {
     padding: 32px 12px;
     font-size: 0.875rem;
     line-height: 1.6;
+    white-space: pre-line;
 }
 
 /* ============================================================
    EDITOR AREA
 ============================================================ */
 .notes-editor {
-
     height: 100%;
-
     min-width: 0;
-
     overflow-y: auto;
-
     overflow-x: hidden;
-
     padding: 28px 48px 40px;
-
     background: var(--color-background);
-
     display: flex;
-
     flex-direction: column;
-
-}
-.note-editor:empty::before {
-
-    content: attr(data-placeholder);
-
-    color: var(--color-text-secondary);
-
-    opacity: .6;
-
-    pointer-events: none;
-
 }
 
 /* ── Editor header (title + save status) ── */
 .editor-header {
-
     display: flex;
-
     align-items: center;
-
     min-height: 52px;
-
     margin-bottom: 16px;
-
 }
 
 .editor-title-block {
-
     display: flex;
-
-    align-items: center;
-
+    align-items: baseline;
     gap: 14px;
-
 }
 
 /* The dynamic note title */
 #note-title {
-
     font-size: 1.7rem;
-
     font-weight: 700;
-
     margin: 0;
-
     color: var(--color-text);
-
     line-height: 1.3;
-
 }
 
 /* ── Save status indicator ── */
@@ -401,6 +499,7 @@ html, body {
     font-weight: 600;
     padding: 4px 12px;
     border-radius: 999px;
+    white-space: nowrap;
     transition:
         opacity 0.4s ease,
         background 0.3s ease,
@@ -423,143 +522,204 @@ html, body {
 .save-status.saved {
     opacity: 1;
     background: #D1FAE5;
-    color: #065F46;
+    color: var(--color-success);
 }
 
-/* ── Formatting toolbar ── */
+/* ── Toolbar ── */
 .editor-toolbar {
-
     display: flex;
-
-    align-items: center;
-
-    gap: 4px;
-
-    width: fit-content;
-
-    padding: 6px 8px;
-
-    margin-bottom: 14px;
-
-    border: 1px solid var(--color-border);
-
-    border-radius: 12px;
-
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
     background: var(--color-surface);
-
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    margin-bottom: 12px;
     box-shadow: var(--shadow-sm);
-
-    position: sticky;
-
-    top: 0;
-
-    z-index: 10;
-
 }
 
 .toolbar-btn {
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
-    padding: 6px 10px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-text-secondary);
     font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 36px;
+    height: 32px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: var(--transition-fast);
-    min-width: 32px;
-    text-align: center;
 }
 
 .toolbar-btn:hover {
     background: var(--color-primary-light);
     color: var(--color-primary);
+    border-color: var(--color-primary-light);
 }
 
 .toolbar-btn:active {
-    transform: scale(0.93);
+    transform: translateY(1px);
 }
 
-.toolbar-divider {
-    width: 1px;
-    height: 20px;
-    background: var(--color-border);
-    margin: 0 4px;
-}
-
-/* ── Main textarea ── */
-.note-editor {
-    width: 100%;
-    flex: 1;
-    min-height: 420px;
-    padding: 28px 32px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    resize: vertical;
-    outline: none;
-    font-size: 1rem;
-    line-height: 1.9;
-    font-family: inherit;
-    color: var(--color-text);
+/* ── Note meta row (folder + chapter) ── */
+.note-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 10px 14px;
     background: var(--color-surface);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+}
+
+.note-folder-select,
+.note-chapter-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.meta-prefix {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+#note-folder-select {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    height: 32px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: var(--color-background);
+    color: var(--color-text);
+    outline: none;
+    cursor: pointer;
+}
+
+#note-folder-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+#note-chapter-input {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    height: 32px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: var(--color-background);
+    color: var(--color-text);
+    outline: none;
+    min-width: 140px;
+}
+
+#note-chapter-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+/* ── Note editor ── */
+.note-editor {
+    flex: 1;
+    min-height: 260px;
+    padding: 20px 24px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--color-text);
+    outline: none;
+    transition: var(--transition-smooth);
+    overflow-y: auto;
     box-shadow: var(--shadow-sm);
 }
 
 .note-editor:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
-.note-editor::placeholder {
+.note-editor:empty::before {
+    content: attr(data-placeholder);
     color: var(--color-text-secondary);
-    opacity: 0.6;
-    line-height: 1.9;
+    opacity: .6;
+    pointer-events: none;
 }
 
-/* ── AI Tools section ── */
-.ai-tools {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.note-editor h2,
+.note-editor h3 {
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+    color: var(--color-text);
 }
 
-.ai-tools-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+.note-editor ul,
+.note-editor ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+}
+
+.note-editor p {
+    margin: 0 0 0.8em 0;
+}
+
+/* ── Group headers in the sidebar ── */
+.notes-group-header {
+    margin: 12px 0 4px 0;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.6px;
     color: var(--color-text-secondary);
+}
+
+.notes-group-header:first-child {
+    margin-top: 0;
+}
+
+/* ── AI tools ── */
+.ai-tools {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
 }
 
 .ai-buttons {
     display: flex;
-    gap: 10px;
     flex-wrap: wrap;
+    gap: 10px;
 }
 
 .tool-btn {
-    border: none;
-    background: var(--color-primary-light);
-    color: var(--color-primary);
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition-smooth);
-    font-family: inherit;
 }
 
 .tool-btn:hover {
-    background: var(--color-primary);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.20);
-}
-
-.tool-btn:active {
-    transform: translateY(0);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+    transform: translateY(-1px);
 }

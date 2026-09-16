@@ -2,26 +2,26 @@
    Responsive Styles
 ========================================== */
 
-/* Large Laptops */
+@media (max-width: 768px) {
+    .notes-page {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: calc(100vh - 64px);
+    }
 
-@media (max-width: 1440px){
+    .notes-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+        max-height: 45vh;
+        padding: 20px 16px;
+    }
 
-}
+    .notes-editor {
+        padding: 20px;
+    }
 
-/* Tablets */
-
-@media (max-width: 1024px){
-
-}
-
-/* Small Tablets */
-
-@media (max-width: 768px){
-
-}
-
-/* Mobile */
-
-@media (max-width: 480px){
-
+    #note-title {
+        font-size: 1.4rem;
+    }
 }

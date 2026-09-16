@@ -4,103 +4,94 @@
     gap: 24px;
     margin-top: 32px;
 }
-.tool-card{
-    background: white;
-    border: 1px solid #E5E7EB;
+
+.tool-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 20px;
-
     padding: 32px;
-
     display: flex;
     flex-direction: column;
-
     align-items: center;
     text-align: center;
-
     transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease,
-        border-color 0.3s ease;
-
+        transform var(--transition-smooth),
+        box-shadow var(--transition-smooth),
+        border-color var(--transition-smooth);
     cursor: pointer;
-
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
 }
-.tool-icon{
+
+.tool-icon {
     font-size: 3rem;
     margin-bottom: 20px;
-    transition: transform .3s ease;
+    transition: transform var(--transition-smooth);
 }
-.tool-card h3{
+
+.tool-card h3 {
     font-size: 1.5rem;
     margin-bottom: 12px;
 }
-.tool-card p{
-    color: #6B7280;
+
+.tool-card p {
+    color: var(--color-text-secondary);
     line-height: 1.6;
     margin-bottom: 24px;
 }
-.tool-card:hover{
+
+.tool-card:hover {
     transform: translateY(-8px);
-
-    box-shadow: 0 18px 40px rgba(0,0,0,0.10);
-
-    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
 }
-.tool-link{
+
+.tool-card:hover .tool-icon {
+    transform: scale(1.1) rotate(-3deg);
+}
+
+.tool-link {
     text-decoration: none;
-
     font-weight: 600;
-
     color: var(--color-primary);
-
     display: inline-flex;
-
     align-items: center;
-
     gap: 6px;
-
-    transition: all .3s ease;
+    transition: all var(--transition-smooth);
 }
-.tool-card:hover .tool-link{
 
-    transform: scale(1.12);
-    
-
+.tool-card:hover .tool-link {
+    transform: scale(1.05);
+    gap: 10px;
 }
-.primary-btn{
 
+.primary-btn {
     background: var(--color-primary);
-
     color: white;
-
     border: none;
-
     padding: 14px 24px;
-
     border-radius: 12px;
-
     font-size: 0.95rem;
-
     font-weight: 600;
-
     cursor: pointer;
-
     transition:
-        transform .3s ease,
-        box-shadow .3s ease,
-        background .3s ease;
-
+        transform var(--transition-smooth),
+        box-shadow var(--transition-smooth),
+        background var(--transition-smooth);
 }
-.primary-btn:hover{
 
+.primary-btn:hover {
     transform: translateY(-3px);
-
     box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
-
+    background: var(--color-primary-hover);
 }
-.primary-btn:active{
 
-    transform: translateY(0);
+.primary-btn:active {
+    transform: translateY(0) scale(0.98);
+}
 
+.primary-btn:focus-visible,
+.tool-card:focus-visible,
+.tool-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
