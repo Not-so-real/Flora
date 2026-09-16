@@ -60,88 +60,123 @@
 
         <!-- ================= Editor ================= -->
 
-        <section class="notes-editor">
+    <section class="notes-editor">
 
-            <div class="editor-header">
+        <!-- Note Header -->
 
-                <div>
+        <div class="editor-header">
 
-                    <h1 class="note-title"
-                        id="note-title">    
-                        📘 Data Structures
-                    </h1>
+            <div class="editor-title-block">
 
-                    <p class="note-meta">
-                        Last edited 2 hours ago
-                    </p>
+                <h2 id="note-title">
+                    📝 No Note Selected
+                </h2>
 
-                </div>
+                <span
+                    id="save-status"
+                    class="save-status hidden">
+                </span>
 
-                <button class="primary-btn">
-                    💾 Save Note
+            </div>
+
+        </div>
+
+
+        <!-- Formatting Toolbar -->
+
+        <div class="editor-toolbar">
+
+            <button
+                class="toolbar-btn"
+                data-command="bold"
+                title="Bold (Ctrl+B)">
+                <strong>B</strong>
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="italic"
+                title="Italic (Ctrl+I)">
+                <em>I</em>
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="underline"
+                title="Underline (Ctrl+U)">
+                <u>U</u>
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="formatBlock"
+                data-value="h2"
+                title="Heading">
+                H1
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="formatBlock"
+                data-value="h3"
+                title="Subheading">
+                H2
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="insertUnorderedList"
+                title="Bullet List">
+                • List
+            </button>
+
+            <button
+                class="toolbar-btn"
+                data-command="insertOrderedList"
+                title="Numbered List">
+                1. List
+            </button>
+
+        </div>
+
+
+        <!-- Writing Area -->
+
+        <div
+            class="note-editor"
+            id="note-editor"
+            contenteditable="true"
+            data-placeholder="Start typing your notes here...">
+        </div>
+
+
+        <!-- AI Tools -->
+
+        <div class="ai-tools">
+
+            <div class="ai-buttons">
+
+                <button class="tool-btn">
+                    ✨ Summarize
+                </button>
+
+                <button class="tool-btn">
+                    🧠 Flashcards
+                </button>
+
+                <button class="tool-btn">
+                    ❓ Quiz
+                </button>
+
+                <button class="tool-btn">
+                    💡 Explain
                 </button>
 
             </div>
 
-            <!-- Toolbar -->
+        </div>
 
-            <div class="editor-toolbar">
-
-                <button class="toolbar-btn"><strong>B</strong></button>
-
-                <button class="toolbar-btn"><em>I</em></button>
-
-                <button class="toolbar-btn"><u>U</u></button>
-
-                <button class="toolbar-btn">H1</button>
-
-                <button class="toolbar-btn">H2</button>
-
-                <button class="toolbar-btn">• </button>
-
-                <button class="toolbar-btn">&lt;/&gt;</button>
-
-            </div>
-
-            <!-- Editor -->
-
-            <textarea
-                class="note-editor"
-                id="note-editor"
-                placeholder="Start typing...
-
-Type '/' to access AI commands."
-            ></textarea>
-
-            <!-- AI Assistant -->
-
-            <div class="ai-tools">
-
-                
-
-                <div class="ai-buttons">
-
-                    <button class="tool-btn">
-                        ✨ Summarize
-                    </button>
-
-                    <button class="tool-btn">
-                        🧠 Flashcards
-                    </button>
-
-                    <button class="tool-btn">
-                        ❓ Quiz
-                    </button>
-
-                    <button class="tool-btn">
-                        💡 Explain
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
+    </section>
 
     </main>
     <script src="js/notes.js"></script>
