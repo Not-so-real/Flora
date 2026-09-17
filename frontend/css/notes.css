@@ -18,13 +18,6 @@ html, body {
     box-sizing: border-box;
 }
 
-/* Placeholder header until the real navbar is added */
-header {
-    height: 64px;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-}
-
 /* ============================================================
    NAVBAR
 ============================================================ */
@@ -64,6 +57,10 @@ header {
     padding: 6px 14px;
     border-radius: 8px;
     transition: var(--transition-smooth);
+}
+
+.notes-dashboard-link {
+    color: var(--color-text);
 }
 
 .notes-nav-link:hover {
@@ -113,6 +110,36 @@ header {
     background: var(--color-surface);
     display: flex;
     flex-direction: column;
+}
+
+.back-to-dashboard {
+    width: fit-content;
+    margin-bottom: 18px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    transition:
+        color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.back-to-dashboard::before {
+    content: "←";
+    margin-right: 7px;
+}
+
+.back-to-dashboard:hover {
+    color: var(--color-primary);
+    transform: translateX(-2px);
+}
+
+.back-to-dashboard:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+    border-radius: 3px;
 }
 
 .sidebar-header {
@@ -236,7 +263,11 @@ header {
     font-weight: 500;
     color: var(--color-text);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
     border: 1px solid transparent;
     overflow: hidden;
 }
@@ -580,7 +611,8 @@ header {
 }
 
 .note-folder-select,
-.note-chapter-input {
+.note-subject-select,
+.note-chapter-select {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -593,7 +625,9 @@ header {
     color: var(--color-text-secondary);
 }
 
-#note-folder-select {
+#note-folder-select,
+#note-subject-select,
+#note-chapter-select {
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 0 10px;
@@ -606,27 +640,26 @@ header {
     cursor: pointer;
 }
 
-#note-folder-select:focus {
+#note-folder-select:focus,
+#note-subject-select:focus,
+#note-chapter-select:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
-#note-chapter-input {
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 0 10px;
-    height: 32px;
-    font-family: inherit;
-    font-size: 0.85rem;
-    background: var(--color-background);
-    color: var(--color-text);
-    outline: none;
-    min-width: 140px;
+#note-subject-select,
+#note-chapter-select {
+    min-width: 150px;
 }
 
-#note-chapter-input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+.note-card-subject {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 /* ── Note editor ── */

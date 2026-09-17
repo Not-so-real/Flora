@@ -6,25 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flora | My Notes</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/notes.css">
     <link rel="stylesheet" href="css/responsive.css">
-    <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/animations.css">
 </head>
 
-<body>
+<body class="flora-animated">
 
-    <header>
-        <!-- Navbar will go here later -->
+    <header class="notes-nav">
+        <a href="index.html" class="notes-nav-logo">Flora</a>
+        <div class="notes-nav-center">
+            <a href="dashboard.html" class="notes-nav-link notes-dashboard-link">Dashboard</a>
+            <a href="notes.html" class="notes-nav-link active">Notes</a>
+        </div>
+        <div class="notes-nav-right" aria-label="Local student profile">
+            <span class="notes-nav-avatar">S</span>
+        </div>
     </header>
 
-    <main class="notes-page">
+    <main class="notes-page fade-in">
 
         <!-- ============== Sidebar ============== -->
 
         <aside class="notes-sidebar">
+
+            <a href="dashboard.html" class="back-to-dashboard">Back to Dashboard</a>
 
             <div class="sidebar-header">
 
@@ -56,7 +67,7 @@
 
         <!-- ============== Editor ============== -->
 
-        <section class="notes-editor">
+        <section class="notes-editor slide-up">
 
             <!-- Note Header -->
 
@@ -115,9 +126,13 @@
                     <span class="meta-prefix">Folder:</span>
                     <select id="note-folder-select"></select>
                 </div>
-                <div class="note-chapter-input">
+                <div class="note-subject-select">
+                    <span class="meta-prefix">Subject:</span>
+                    <select id="note-subject-select"></select>
+                </div>
+                <div class="note-chapter-select">
                     <span class="meta-prefix">Chapter:</span>
-                    <input type="text" id="note-chapter-input" placeholder="e.g. Algebra">
+                    <select id="note-chapter-select"></select>
                 </div>
             </div>
 

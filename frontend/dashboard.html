@@ -1,225 +1,233 @@
-<link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/dashboard.css">
-<link rel="stylesheet" href="css/responsive.css">
-<link rel="stylesheet" href="css/animations.css">
-<body>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body class="flora-animated">
 
     <div class="dashboard">
 
         <aside class="sidebar">
 
-    <div class="sidebar-logo">
+            <div class="sidebar-logo">
 
-        <h2>Flora</h2>
+                <h2>Flora</h2>
 
-    </div>
+            </div>
 
-    <nav class="sidebar-nav">
+            <nav class="sidebar-nav">
 
-        <a href="#" class="nav-item active">Dashboard</a>
+                <a href="dashboard.html" class="nav-item active">Dashboard</a>
 
-        <a href="#" class="nav-item">Subjects</a>
+                <a href="#subjects" class="nav-item">Subjects</a>
 
-        <a href="#" class="nav-item">Notes</a>
+                <a href="notes.html" class="nav-item">Notes</a>
 
-        <a href="#" class="nav-item">Flashcards</a>
+                <span class="nav-item disabled" aria-disabled="true">Flashcards <small>Soon</small></span>
 
-        <a href="#" class="nav-item">Quizzes</a>
+                <span class="nav-item disabled" aria-disabled="true">Quizzes <small>Soon</small></span>
 
-        <a href="#" class="nav-item">Planner</a>
+                <span class="nav-item disabled" aria-disabled="true">Planner <small>Soon</small></span>
 
-        <a href="#" class="nav-item">Progress</a>
+                <span class="nav-item disabled" aria-disabled="true">Progress <small>Soon</small></span>
 
-        <a href="#" class="nav-item">Settings</a>
+                <span class="nav-item disabled" aria-disabled="true">Settings <small>Soon</small></span>
 
-    </nav>
+            </nav>
 
-    <div class="sidebar-profile">
+            <div class="sidebar-profile">
 
-        <h4>Shivam</h4>
+                <h4>Shivam</h4>
 
-        <p>Student</p>
+                <p>Student</p>
 
-    </div>
+            </div>
 
-</aside>
+        </aside>
 
-        <main class="main-content">
+        <main class="main-content fade-in">
+
             <section class="dashboard-header">
 
-    <h1>Good Afternoon, Guest User 👋</h1>
+                <h1>Good Afternoon, Guest User 👋</h1>
 
-    <p>Let's continue your learning journey.</p>
+                <p>Let's continue your learning journey.</p>
 
-</section>
+            </section>
 
-<section class="stats-grid">
+            <section class="stats-grid stagger-children">
 
-    <div class="card stat-card">
+                <div class="card stat-card">
 
-        <h3>Study Streak</h3>
+                    <h3>Study Streak</h3>
 
-        <h2>14</h2>
+                    <h2>14</h2>
 
-        <p>Days in a row</p>
+                    <p>Days in a row</p>
 
-    </div>
+                </div>
 
-    <div class="stat-card">
+                <div class="card stat-card">
 
-        <h3>Flashcards</h3>
+                    <h3>Flashcards</h3>
 
-        <h2>248</h2>
+                    <h2>248</h2>
 
-        <p>Reviewed this week</p>
+                    <p>Reviewed this week</p>
 
-    </div>
+                </div>
 
-    <div class="stat-card">
+                <div class="card stat-card">
 
-        <h3>Quiz Accuracy</h3>
+                    <h3>Quiz Accuracy</h3>
 
-        <h2>92%</h2>
+                    <h2>92%</h2>
 
-        <p>Average score</p>
+                    <p>Average score</p>
 
-    </div>
+                </div>
 
-    <div class="stat-card">
+                <div class="card stat-card">
 
-        <h3>Study Time</h3>
+                    <h3>Study Time</h3>
 
-        <h2>12h 30m</h2>
+                    <h2>12h 30m</h2>
 
-        <p>This week</p>
+                    <p>This week</p>
 
-    </div>
+                </div>
 
-</section>
-<section class="continue-section">
+            </section>
 
-    <h2 class="section-heading">
-        Continue Studying
-    </h2>
+            <section class="continue-section">
 
-    <div class="card learning-card">
+                <h2 class="section-heading">
+                    Continue Studying
+                </h2>
 
-        <div class="learning-info">
+                <div class="card learning-card hover-lift" id="continue-study-card">
 
-            <span class="subject-badge">
-                Computer Science
-            </span>
+                    <div class="learning-info">
 
-            <h3>Data Structures</h3>
+                        <span class="subject-badge" id="continue-subject-name">
+                            Computer Science
+                        </span>
 
-            <p class="chapter-title">
-                Chapter 4 • Trees
-            </p>
+                        <h3 id="continue-topic">Data Structures</h3>
 
-            <div class="progress-header">
+                        <p class="chapter-title" id="continue-chapter">
+                            Chapter 4 • Trees
+                        </p>
 
-                <span>Progress</span>
+                        <div class="progress-header">
 
-                <span class="progress-percent">
-                    80%
-                </span>
+                            <span>Progress</span>
 
-            </div>
+                            <span class="progress-percent" id="continue-progress-percent">
+                                80%
+                            </span>
 
-            <div class="progress-bar">
+                        </div>
 
-                <div class="progress-fill"></div>
+                        <div class="progress-bar">
 
-            </div>
+                            <div class="progress-fill" id="continue-progress-fill"></div>
 
-            <div class="learning-meta">
+                        </div>
 
-                <span>5 Chapters Remaining</span>
+                        <div class="learning-meta">
 
-                <span>Last Studied • Today, 2 hours ago</span>
+                            <span id="continue-chapters-remaining">5 Chapters Remaining</span>
 
-            </div>
+                            <span class="last-studied" id="continue-last-studied">Last Studied • Today, 2 hours ago</span>
 
-        </div>
+                        </div>
 
-        <div class="learning-action">
+                    </div>
 
-            <button class="continue-btn">
+                    <div class="learning-action">
 
-                Continue Studying →
+                        <a href="subject.html" class="continue-btn" id="continue-study-btn">
 
-            </button>
+                            Continue Studying →
 
-        </div>
+                        </a>
 
-    </div>
+                    </div>
 
-</section>
+                </div>
 
-<section class="subjects-section">
+            </section>
 
-    <div class="section-header">
+            <section class="subjects-section" id="subjects">
 
-        <h2>All Subjects</h2>
+                <div class="section-header">
 
-        <p>
-            Choose a subject to continue your learning.
-        </p>
+                    <div>
+                        <h2>All Subjects</h2>
 
-    </div>
+                        <p>
+                            Choose a subject to continue your learning.
+                        </p>
+                    </div>
 
-    <div class="subjects-grid">
+                    <button type="button" class="primary-btn subject-add-btn" id="new-subject-btn">
+                        + New Subject
+                    </button>
 
-        <!-- Subject Cards -->
+                </div>
 
-    </div>
+                <div class="subjects-grid stagger-children" id="subjects-grid"></div>
 
-</section>
-<div class="card subject-card">
+            </section>
 
-    <span class="subject-badge">
-        Computer Science
-    </span>
-
-    <div class="progress-section">
-
-        <div class="progress-header">
-
-            <span>Progress</span>
-
-            <span class="progress-percent">
-                80%
-            </span>
-
-        </div>
-
-        <div class="progress-bar">
-
-            <div class="progress-fill"></div>
-
-        </div>
-
-    </div>
-
-    <p class="chapters-completed">
-
-        14 / 18 Chapters Completed
-
-    </p>
-
-    <div class="subject-footer">
-
-        <span class="open-subject">
-
-            → Open Subject
-
-        </span>
-
-    </div>
-
-</div>
         </main>
 
     </div>
 
+    <dialog class="subject-dialog" id="subject-dialog" aria-labelledby="subject-dialog-title">
+        <form method="dialog" class="subject-form" id="subject-form">
+            <div class="subject-dialog-header">
+                <div>
+                    <p class="dialog-eyebrow">Subject workspace</p>
+                    <h2 id="subject-dialog-title">Create a subject</h2>
+                </div>
+                <button type="button" class="dialog-close-btn" id="subject-dialog-close" aria-label="Close">&times;</button>
+            </div>
+
+            <input type="hidden" id="subject-id">
+
+            <label for="subject-name">Subject name</label>
+            <input type="text" id="subject-name" maxlength="50" placeholder="e.g. Mathematics" required>
+
+            <label for="subject-description">Short description <span>Optional</span></label>
+            <textarea id="subject-description" maxlength="140" rows="3" placeholder="What are you studying in this subject?"></textarea>
+
+            <p class="form-error" id="subject-form-error" role="alert"></p>
+
+            <div class="subject-form-actions">
+                <button type="button" class="secondary-btn" id="subject-cancel-btn">Cancel</button>
+                <button type="submit" class="primary-btn" id="subject-save-btn">Create Subject</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/subjects.js"></script>
+
 </body>
+
+</html>

@@ -32,23 +32,26 @@
                     <div class="progress-header"><span>Progress</span><strong data-subject-progress>80%</strong></div>
                     <div class="progress-bar"><span class="progress-fill" data-subject-progress-fill></span></div>
                 </div>
-                <a href="notes.html" class="continue-btn">Open notes <span aria-hidden="true">&rarr;</span></a>
+                <a href="notes.html" class="continue-btn" id="current-chapter-notes-link">Open notes <span aria-hidden="true">&rarr;</span></a>
             </div>
         </section>
 
-        <section class="subject-section recent-section">
-            <div class="section-header"><p class="page-kicker">History</p><h2>Recent chapters</h2><p>Jump back into your recent learning.</p></div>
-            <div class="chapter-list stagger-children" id="recent-chapters-list">
-                <article class="chapter-row"><div><span>01</span><h3>Trees</h3><p>Last studied yesterday</p></div><a href="notes.html">Continue &rarr;</a></article>
-                <article class="chapter-row"><div><span>02</span><h3>Linked Lists</h3><p>Completed</p></div><a href="notes.html">Review &rarr;</a></article>
-                <article class="chapter-row"><div><span>03</span><h3>Stacks</h3><p>Completed</p></div><a href="notes.html">Review &rarr;</a></article>
+        <section class="subject-section chapters-section">
+            <div class="section-header">
+                <div>
+                    <p class="page-kicker">Chapters</p>
+                    <h2>All chapters</h2>
+                    <p>Track and manage what you need to study.</p>
+                </div>
+                <button type="button" class="primary-btn" id="new-chapter-btn">+ New Chapter</button>
             </div>
+            <div class="chapter-list stagger-children" id="chapters-list"></div>
         </section>
 
         <section class="subject-section study-modes">
             <div class="section-header"><p class="page-kicker">Study tools</p><h2>Choose a study mode</h2><p>Pick how you would like to continue learning today.</p></div>
             <div class="study-grid stagger-children">
-                <article class="tool-card"><div class="tool-icon">N</div><h3>Notes</h3><p>Create and organize study notes by folder and chapter.</p><a href="notes.html" class="tool-link">Open notes &rarr;</a></article>
+                <article class="tool-card"><div class="tool-icon">N</div><h3>Notes</h3><p>Create and organize study notes by folder and chapter.</p><a href="notes.html" class="tool-link" id="subject-notes-link">Open notes &rarr;</a></article>
                 <article class="tool-card is-coming-soon"><div class="tool-icon">F</div><h3>Flashcards</h3><p>Review concepts with interactive flashcards.</p><span class="tool-link muted">Coming soon</span></article>
                 <article class="tool-card is-coming-soon"><div class="tool-icon">Q</div><h3>Quiz</h3><p>Challenge yourself with quick quizzes.</p><span class="tool-link muted">Coming soon</span></article>
                 <article class="tool-card is-coming-soon"><div class="tool-icon">R</div><h3>Resources</h3><p>Browse documents, videos, and study materials.</p><span class="tool-link muted">Coming soon</span></article>
@@ -64,6 +67,38 @@
             </div>
         </section>
     </main>
+    <dialog class="subject-dialog chapter-dialog" id="chapter-dialog" aria-labelledby="chapter-dialog-title">
+        <form method="dialog" class="subject-form" id="chapter-form">
+            <div class="subject-dialog-header">
+                <div>
+                    <p class="dialog-eyebrow">Chapter</p>
+                    <h2 id="chapter-dialog-title">Add chapter</h2>
+                </div>
+                <button type="button" class="dialog-close-btn" id="chapter-dialog-close" aria-label="Close">&times;</button>
+            </div>
+
+            <input type="hidden" id="chapter-id">
+
+            <label for="chapter-name">Chapter name</label>
+            <input type="text" id="chapter-name" maxlength="60" placeholder="e.g. Binary Trees" required>
+
+            <label for="chapter-description">Short description <span>Optional</span></label>
+            <textarea id="chapter-description" maxlength="140" rows="3" placeholder="What will you learn in this chapter?"></textarea>
+
+            <label class="checkbox-label">
+                <input type="checkbox" id="chapter-completed">
+                <span>Mark as completed</span>
+            </label>
+
+            <p class="form-error" id="chapter-form-error" role="alert"></p>
+
+            <div class="subject-form-actions">
+                <button type="button" class="secondary-btn" id="chapter-cancel-btn">Cancel</button>
+                <button type="submit" class="primary-btn" id="chapter-save-btn">Add Chapter</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="js/subject.js"></script>
 </body>
 </html>

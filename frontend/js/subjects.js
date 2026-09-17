@@ -28,6 +28,66 @@ subjectDialog.addEventListener("click", event => {
 });
 
 renderSubjects();
+updateContinueStudyLink();
+
+function updateContinueStudyLink() {
+    const continueBtn = document.getElementById("continue-study-btn");
+    const card = document.getElementById("continue-study-card");
+    if (!continueBtn || !card) return;
+
+    const subjectName = document.getElementById("continue-subject-name");
+    const topic = document.getElementById("continue-topic");
+    const chapterLabel = document.getElementById("continue-chapter");
+    const progressPercent = document.getElementById("continue-progress-percent");
+    const progressFill = document.getElementById("continue-progress-fill");
+    const chaptersRemaining = document.getElementById("continue-chapters-remaining");
+    const lastStudied = document.getElementById("continue-last-studied");
+
+    if (!subjects.length) {
+        subjectName.textContent = "No subject selected";
+        topic.textContent = "Create your first subject";
+        chapterLabel.textContent = "Your next study session starts here.";
+        progressPercent.textContent = "0%";
+        progressFill.style.width = "0%";
+        chaptersRemaining.textContent = "No chapters yet";
+        lastStudied.textContent = "Add a subject below to begin";
+        continueBtn.textContent = "Create a Subject";
+        continueBtn.href = "#subjects";
+        return;
+    }
+
+    const currentId = localStorage.getItem(CURRENT_SUBJECT_KEY);
+    const subject = subjects.find(item => item.id === currentId) || subjects[0];
+    updateSubjectStats(subject);
+
+    const currentChapter = findCurrentChapter(subject);
+    const progress = computeSubjectProgress(subject);
+    const remaining = subject.totalChapters - subject.completedChapters;
+
+    subjectName.textContent = subject.name;
+    topic.textContent = subject.currentTopic || subject.name;
+    chapterLabel.textContent = currentChapter ? currentChapter.name : "No chapters added yet";
+    progressPercent.textContent = `${progress}%`;
+    progressFill.style.width = `${progress}%`;
+    chaptersRemaining.textContent = subject.totalChapters
+        ? `${remaining} ${remaining === 1 ? "Chapter" : "Chapters"} Remaining`
+        : "Add your first chapter";
+    lastStudied.textContent = `Last Updated • ${formatUpdatedDate(subject.updatedAt)}`;
+    continueBtn.textContent = subject.totalChapters ? "Continue Studying ->" : "Open Subject ->";
+    continueBtn.href = `subject.html?id=${encodeURIComponent(subject.id)}`;
+}
+
+function formatUpdatedDate(timestamp) {
+    const date = new Date(Number(timestamp) || Date.now());
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+
+    if (isToday) {
+        return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
 
 function loadSubjects() {
     const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
@@ -43,14 +103,30 @@ function loadSubjects() {
         }
     }
 
+    const starterChapters = [
+        "Arrays and Strings", "Linked Lists", "Stacks and Queues", "Trees",
+        "Graphs", "Hash Tables", "Heaps", "Sorting Algorithms",
+        "Searching Algorithms", "Dynamic Programming", "Greedy Algorithms",
+        "Recursion", "Bit Manipulation", "Object-Oriented Design",
+        "System Design Basics", "Databases", "Networking Basics", "Operating Systems Basics"
+    ].map((name, index) => ({
+        id: `chapter-${index + 1}`,
+        name,
+        description: "",
+        completed: index < 14,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    }));
+
     const starterSubject = {
         id: "computer-science",
         name: "Computer Science",
         description: "Data structures, algorithms, and programming fundamentals.",
+        chapters: starterChapters,
         completedChapters: 14,
         totalChapters: 18,
-        currentTopic: "Data Structures",
-        currentChapter: "Chapter 4: Trees",
+        currentTopic: "Computer Science",
+        currentChapter: "Trees",
         createdAt: Date.now(),
         updatedAt: Date.now()
     };
@@ -65,18 +141,114 @@ function normalizeSubject(subject) {
     }
 
     const id = String(subject.id);
+    let chapters = Array.isArray(subject.chapters)
+        ? subject.chapters.map(normalizeChapter).filter(Boolean)
+        : [];
+
+    // Migrate old subjects that had hardcoded chapter counts but no chapter list
+    if (chapters.length === 0 && subject.totalChapters > 0) {
+        chapters = migrateLegacyChapters(subject);
+    }
 
     return {
         id,
         name: String(subject.name).trim(),
         description: String(subject.description || "").trim(),
-        completedChapters: Math.max(0, Number(subject.completedChapters) || 0),
-        totalChapters: Math.max(0, Number(subject.totalChapters) || 0),
+        chapters,
+        completedChapters: countCompletedChapters(chapters),
+        totalChapters: chapters.length,
         currentTopic: String(subject.currentTopic || (id === "computer-science" ? "Data Structures" : "")).trim(),
         currentChapter: String(subject.currentChapter || (id === "computer-science" ? "Chapter 4: Trees" : "")).trim(),
         createdAt: Number(subject.createdAt) || Date.now(),
         updatedAt: Number(subject.updatedAt) || Date.now()
     };
+}
+
+function normalizeChapter(chapter) {
+    if (!chapter || typeof chapter !== "object" || !chapter.id || !chapter.name) {
+        return null;
+    }
+
+    return {
+        id: String(chapter.id),
+        name: String(chapter.name).trim(),
+        description: String(chapter.description || "").trim(),
+        completed: Boolean(chapter.completed),
+        createdAt: Number(chapter.createdAt) || Date.now(),
+        updatedAt: Number(chapter.updatedAt) || Date.now()
+    };
+}
+
+function migrateLegacyChapters(subject) {
+    const total = Math.max(0, Number(subject.totalChapters) || 0);
+    const completed = Math.max(0, Number(subject.completedChapters) || 0);
+    const chapters = [];
+    const legacyNames = [
+        "Arrays and Strings",
+        "Linked Lists",
+        "Stacks and Queues",
+        "Trees",
+        "Graphs",
+        "Hash Tables",
+        "Heaps",
+        "Sorting Algorithms",
+        "Searching Algorithms",
+        "Dynamic Programming",
+        "Greedy Algorithms",
+        "Recursion",
+        "Bit Manipulation",
+        "Object-Oriented Design",
+        "System Design Basics",
+        "Databases",
+        "Networking Basics",
+        "Operating Systems Basics"
+    ];
+
+    for (let i = 0; i < total; i++) {
+        chapters.push({
+            id: `chapter-${i + 1}`,
+            name: legacyNames[i] || `Chapter ${i + 1}`,
+            description: "",
+            completed: i < completed,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        });
+    }
+
+    return chapters;
+}
+
+function countCompletedChapters(chapters) {
+    return chapters.filter(chapter => chapter.completed).length;
+}
+
+function computeSubjectProgress(subject) {
+    if (!subject.totalChapters) return 0;
+    return Math.min(100, Math.round((subject.completedChapters / subject.totalChapters) * 100));
+}
+
+function findCurrentChapter(subject) {
+    if (!subject.chapters || subject.chapters.length === 0) return null;
+
+    const firstIncomplete = subject.chapters.find(chapter => !chapter.completed);
+    return firstIncomplete || subject.chapters[subject.chapters.length - 1];
+}
+
+function updateSubjectStats(subject) {
+    if (!Array.isArray(subject.chapters)) {
+        subject.chapters = [];
+    }
+
+    subject.completedChapters = countCompletedChapters(subject.chapters);
+    subject.totalChapters = subject.chapters.length;
+
+    const current = findCurrentChapter(subject);
+    if (current) {
+        subject.currentTopic = subject.name;
+        subject.currentChapter = current.name;
+    } else {
+        subject.currentChapter = "";
+    }
 }
 
 function saveSubjects() {
@@ -144,6 +316,7 @@ function saveSubjectFromForm(event) {
             id: createSubjectId(),
             name,
             description,
+            chapters: [],
             completedChapters: 0,
             totalChapters: 0,
             currentTopic: "",
@@ -156,6 +329,7 @@ function saveSubjectFromForm(event) {
     saveSubjects();
     closeSubjectDialog();
     renderSubjects();
+    updateContinueStudyLink();
 }
 
 function deleteSubject(subject) {
@@ -173,11 +347,11 @@ function deleteSubject(subject) {
 
     saveSubjects();
     renderSubjects();
+    updateContinueStudyLink();
 }
 
 function getProgress(subject) {
-    if (!subject.totalChapters) return 0;
-    return Math.min(100, Math.round((subject.completedChapters / subject.totalChapters) * 100));
+    return computeSubjectProgress(subject);
 }
 
 function renderSubjects() {
@@ -205,6 +379,7 @@ function renderSubjects() {
     }
 
     subjects.forEach(subject => {
+        updateSubjectStats(subject);
         const progress = getProgress(subject);
         const card = document.createElement("article");
         card.className = "card subject-card";
@@ -274,4 +449,6 @@ function renderSubjects() {
         card.append(badge, description, progressSection, chapters, footer);
         subjectsGrid.appendChild(card);
     });
+
+    saveSubjects();
 }

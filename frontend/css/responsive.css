@@ -1,27 +1,290 @@
-/* ==========================================
-   Responsive Styles
-========================================== */
+/* Shared responsive rules. Page-specific desktop layouts stay in their own files. */
+
+@media (max-width: 1024px) {
+    /* Landing */
+    .hero {
+        grid-template-columns: 1fr 390px;
+        gap: 42px;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .feature-item:nth-child(3n) {
+        border-right: 1px solid var(--color-border);
+    }
+
+    .feature-item:nth-child(2n) {
+        border-right: 0;
+    }
+
+    /* Dashboard */
+    .dashboard {
+        grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
 
 @media (max-width: 768px) {
+    /* Landing */
+    .site-nav {
+        width: min(100% - 32px, 1200px);
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-actions .btn-outline {
+        display: none;
+    }
+
+    .hero,
+    .content-section,
+    .final-cta,
+    .site-footer {
+        width: min(100% - 32px, 1200px);
+    }
+
+    .hero {
+        min-height: auto;
+        padding: 64px 0 80px;
+        grid-template-columns: 1fr;
+    }
+
+    .hero-right {
+        width: min(100%, 520px);
+    }
+
+    .content-section {
+        padding: 80px 0;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-item,
+    .feature-item:nth-child(2n),
+    .feature-item:nth-child(3n) {
+        border-right: 0;
+    }
+
+    .final-cta {
+        padding-top: 80px;
+        padding-bottom: 80px;
+    }
+
+    /* Dashboard */
+    .dashboard {
+        display: block;
+    }
+
+    .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 16px;
+        display: block;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .sidebar-logo {
+        margin: 0 0 14px;
+    }
+
+    .sidebar-logo h2 {
+        margin-bottom: 14px;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .nav-item {
+        flex: 0 0 auto;
+        min-height: 38px;
+    }
+
+    .nav-item.disabled,
+    .sidebar-profile {
+        display: none;
+    }
+
+    .main-content {
+        padding: 42px 20px 64px;
+    }
+
+    .learning-card {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 26px;
+    }
+
+    .continue-btn {
+        align-self: flex-start;
+    }
+
+    .subjects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subjects-section > .section-header {
+        align-items: flex-start;
+    }
+
+    /* Subject */
+    .subject-page {
+        width: min(100% - 32px, 1120px);
+        padding-top: 24px;
+    }
+
+    .subject-header {
+        padding-bottom: 42px;
+    }
+
+    .back-link {
+        margin-bottom: 42px;
+    }
+
+    .subject-section {
+        padding: 64px 0;
+    }
+
+    .study-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Notes */
     .notes-page {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
         height: auto;
         min-height: calc(100vh - 64px);
+        overflow: visible;
     }
 
     .notes-sidebar {
+        height: auto;
+        max-height: 48vh;
+        padding: 20px 16px;
         border-right: none;
         border-bottom: 1px solid var(--color-border);
-        max-height: 45vh;
-        padding: 20px 16px;
+    }
+
+    .notes-nav {
+        padding: 0 16px;
+    }
+
+    .notes-nav-center {
+        gap: 2px;
+    }
+
+    .notes-nav-link {
+        padding: 6px 9px;
     }
 
     .notes-editor {
-        padding: 20px;
+        min-height: 70vh;
+        padding: 24px 20px 40px;
     }
 
     #note-title {
         font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .hero-title {
+        font-size: clamp(3rem, 16vw, 4.3rem);
+    }
+
+    .hero-buttons {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .quiz-options {
+        grid-template-columns: 1fr;
+    }
+
+    .features-grid,
+    .stats-grid {
+        display: block;
+    }
+
+    .stat-card {
+        margin-bottom: 12px;
+    }
+
+    .learning-meta,
+    .site-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .subjects-section > .section-header {
+        flex-direction: column;
+    }
+
+    .subject-add-btn {
+        width: 100%;
+    }
+
+    .subject-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .subject-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .subject-form {
+        padding: 22px;
+    }
+
+    .subject-form-actions {
+        flex-direction: column;
+    }
+
+    .subject-form-actions .primary-btn,
+    .subject-form-actions .secondary-btn {
+        width: 100%;
+    }
+
+    .chapter-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .note-meta-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .note-folder-select,
+    .note-chapter-input {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #note-folder-select,
+    #note-chapter-input {
+        width: 100%;
+    }
+
+    .ai-buttons .tool-btn {
+        flex: 1 1 calc(50% - 10px);
+        justify-content: center;
     }
 }

@@ -15,11 +15,14 @@ const noteEditor       = document.getElementById("note-editor");
 const noteSearch       = document.getElementById("note-search");
 const saveStatus       = document.getElementById("save-status");
 const noteFolderSelect = document.getElementById("note-folder-select");
-const noteChapterInput = document.getElementById("note-chapter-input");
+const noteSubjectSelect = document.getElementById("note-subject-select");
+const noteChapterSelect = document.getElementById("note-chapter-select");
 const toolbarBtns      = document.querySelectorAll(".toolbar-btn");
 
 // ── Constants ────────────────────────────────────────────────
 const DEFAULT_FOLDER = { id: "folder-default", name: "All Notes" };
+const SUBJECTS_STORAGE_KEY = "flora-subjects";
+const CURRENT_SUBJECT_KEY = "flora-current-subject";
 
 // ── App state ────────────────────────────────────────────────
 let folders       = [];
@@ -27,6 +30,11 @@ let currentFolder = null;
 let notes         = [];
 let currentNote   = null;
 let saveTimer     = null;   // debounce handle for save indicator
+let subjects      = [];
+
+const noteContext = new URLSearchParams(window.location.search);
+let pendingSubjectId = noteContext.get("subject") || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
+let pendingChapterId = noteContext.get("chapter") || "";
 
 // ── Boot ─────────────────────────────────────────────────────
 newNoteBtn.addEventListener("click", createNote);
@@ -77,10 +85,40 @@ noteFolderSelect.addEventListener("change", () => {
     showSaveStatus();
 });
 
-noteChapterInput.addEventListener("input", () => {
-    if (!currentNote) return;
+noteSubjectSelect.addEventListener("change", () => {
+    const subjectId = noteSubjectSelect.value;
 
-    currentNote.chapter   = noteChapterInput.value.trim();
+    if (currentNote) {
+        currentNote.subjectId = subjectId;
+        currentNote.chapterId = "";
+        currentNote.chapter = "";
+        currentNote.updatedAt = Date.now();
+        saveNotes();
+        renderNotes(filterNotes(noteSearch.value));
+        showSaveStatus();
+    } else {
+        pendingSubjectId = subjectId;
+        pendingChapterId = "";
+    }
+
+    if (subjectId) {
+        localStorage.setItem(CURRENT_SUBJECT_KEY, subjectId);
+    }
+
+    renderChapterSelect();
+});
+
+noteChapterSelect.addEventListener("change", () => {
+    const chapterId = noteChapterSelect.value;
+    const chapter = findChapter(noteSubjectSelect.value, chapterId);
+
+    if (!currentNote) {
+        pendingChapterId = chapterId;
+        return;
+    }
+
+    currentNote.chapterId = chapterId;
+    currentNote.chapter = chapter ? chapter.name : "";
     currentNote.updatedAt = Date.now();
 
     saveNotes();
@@ -88,10 +126,94 @@ noteChapterInput.addEventListener("input", () => {
     showSaveStatus();
 });
 
+loadSubjects();
 loadFolders();
 loadNotes();
 renderFolders();
+renderSubjectSelect();
+renderChapterSelect();
 renderNotes();
+
+// ============================================================
+//  SUBJECTS + CHAPTERS
+// ============================================================
+function loadSubjects() {
+    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
+    if (!raw) return;
+
+    try {
+        const storedSubjects = JSON.parse(raw);
+        subjects = Array.isArray(storedSubjects) ? storedSubjects : [];
+    } catch (error) {
+        console.error("Could not load subjects:", error);
+        subjects = [];
+    }
+
+    if (!subjects.some(subject => subject.id === pendingSubjectId)) {
+        pendingSubjectId = "";
+        pendingChapterId = "";
+    }
+}
+
+function findSubject(subjectId) {
+    return subjects.find(subject => subject.id === subjectId) || null;
+}
+
+function findChapter(subjectId, chapterId) {
+    const subject = findSubject(subjectId);
+    if (!subject || !Array.isArray(subject.chapters)) return null;
+    return subject.chapters.find(chapter => chapter.id === chapterId) || null;
+}
+
+function renderSubjectSelect() {
+    const selectedId = currentNote ? currentNote.subjectId : pendingSubjectId;
+    noteSubjectSelect.innerHTML = "";
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = subjects.length ? "No subject" : "No subjects available";
+    noteSubjectSelect.appendChild(emptyOption);
+
+    subjects.forEach(subject => {
+        const option = document.createElement("option");
+        option.value = subject.id;
+        option.textContent = subject.name;
+        option.selected = subject.id === selectedId;
+        noteSubjectSelect.appendChild(option);
+    });
+}
+
+function renderChapterSelect() {
+    const subjectId = currentNote ? currentNote.subjectId : pendingSubjectId;
+    const selectedId = currentNote ? currentNote.chapterId : pendingChapterId;
+    const subject = findSubject(subjectId);
+    const chapters = subject && Array.isArray(subject.chapters) ? subject.chapters : [];
+
+    noteChapterSelect.innerHTML = "";
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = subjectId
+        ? (chapters.length ? "No chapter" : "No chapters available")
+        : "Choose a subject first";
+    noteChapterSelect.appendChild(emptyOption);
+
+    chapters.forEach(chapter => {
+        const option = document.createElement("option");
+        option.value = chapter.id;
+        option.textContent = chapter.name;
+        option.selected = chapter.id === selectedId;
+        noteChapterSelect.appendChild(option);
+    });
+
+    noteChapterSelect.disabled = !subjectId || chapters.length === 0;
+}
+
+function syncNoteMetaControls() {
+    renderFolderSelect();
+    renderSubjectSelect();
+    renderChapterSelect();
+}
 
 // ============================================================
 //  FOLDERS
@@ -223,10 +345,16 @@ function renderFolders() {
 //  CREATE
 // ============================================================
 function createNote() {
+    const selectedSubjectId = noteSubjectSelect.value || pendingSubjectId;
+    const selectedChapterId = noteChapterSelect.value || pendingChapterId;
+    const selectedChapter = findChapter(selectedSubjectId, selectedChapterId);
+
     const note = {
         id:        Date.now(),
         folderId:  currentFolder ? currentFolder.id : DEFAULT_FOLDER.id,
-        chapter:   "",
+        subjectId:  selectedSubjectId,
+        chapterId:  selectedChapter ? selectedChapter.id : "",
+        chapter:    selectedChapter ? selectedChapter.name : "",
         title:     "Untitled Note",
         content:   "",
         updatedAt: Date.now()
@@ -238,9 +366,8 @@ function createNote() {
     noteTitle.textContent    = "📝 " + note.title;
     setEditorContent("");
     noteSearch.value         = "";
-    noteChapterInput.value   = "";
 
-    renderFolderSelect();
+    syncNoteMetaControls();
     saveNotes();
     renderFolders();
     renderNotes();
@@ -284,6 +411,36 @@ function loadNotes() {
                 note.folderId = DEFAULT_FOLDER.id;
             }
 
+            // Keep legacy notes valid while adding subject/chapter references
+            note.subjectId = note.subjectId || "";
+            note.chapterId = note.chapterId || "";
+            note.chapter = note.chapter || "";
+
+            if (note.subjectId && !findSubject(note.subjectId)) {
+                note.subjectId = "";
+                note.chapterId = "";
+            }
+
+            if (note.subjectId && !note.chapterId && note.chapter) {
+                const subject = findSubject(note.subjectId);
+                const matchedChapter = subject && Array.isArray(subject.chapters)
+                    ? subject.chapters.find(chapter => chapter.name.toLowerCase() === note.chapter.toLowerCase())
+                    : null;
+
+                if (matchedChapter) {
+                    note.chapterId = matchedChapter.id;
+                }
+            }
+
+            if (note.subjectId && note.chapterId) {
+                const linkedChapter = findChapter(note.subjectId, note.chapterId);
+                if (linkedChapter) {
+                    note.chapter = linkedChapter.name;
+                } else {
+                    note.chapterId = "";
+                }
+            }
+
             // Clean up old label data from earlier experiments
             if (note.labels) {
                 delete note.labels;
@@ -296,7 +453,22 @@ function loadNotes() {
     }
 
     if (notes.length > 0) {
-        currentNote = notes[0];
+        if (pendingSubjectId) {
+            currentNote = notes.find(note =>
+                note.subjectId === pendingSubjectId &&
+                (!pendingChapterId || note.chapterId === pendingChapterId)
+            ) || null;
+        } else {
+            currentNote = notes[0];
+        }
+
+        if (!currentNote) {
+            noteTitle.textContent = "📝 No Note Selected";
+            setEditorContent("");
+            syncNoteMetaControls();
+            saveNotes();
+            return;
+        }
 
         // Make sure the note's folder still exists
         const noteFolder = folders.find(f => f.id === currentNote.folderId);
@@ -306,8 +478,8 @@ function loadNotes() {
 
         noteTitle.textContent    = "📝 " + currentNote.title;
         setEditorContent(currentNote.content);
-        noteChapterInput.value   = currentNote.chapter || "";
-        renderFolderSelect();
+        syncNoteMetaControls();
+        saveNotes();
     }
 }
 
@@ -370,7 +542,9 @@ function filterNotes(query) {
         const inTitle   = note.title.toLowerCase().includes(q);
         const inContent = note.content.toLowerCase().includes(q);
         const inChapter = note.chapter && note.chapter.toLowerCase().includes(q);
-        return inTitle || inContent || inChapter;
+        const subject = findSubject(note.subjectId);
+        const inSubject = subject && subject.name.toLowerCase().includes(q);
+        return inTitle || inContent || inChapter || inSubject;
     });
 }
 
@@ -443,9 +617,14 @@ function renderNoteCard(note) {
 
     const preview   = getPreview(note.content);
     const timestamp = timeAgo(note.updatedAt);
+    const subject = findSubject(note.subjectId);
+    const subjectLabel = subject
+        ? `<span class="note-card-subject">${escapeHtml(subject.name)}</span>`
+        : "";
 
     noteCard.innerHTML = `
         <div class="note-content">
+            ${subjectLabel}
             <h3>📝 ${escapeHtml(note.title)}</h3>
             <p class="note-preview">${escapeHtml(preview)}</p>
             <span class="note-timestamp">✏️ ${timestamp}</span>
@@ -471,13 +650,11 @@ function renderNoteCard(note) {
             if (currentNote) {
                 noteTitle.textContent  = "📝 " + currentNote.title;
                 setEditorContent(currentNote.content);
-                noteChapterInput.value = currentNote.chapter || "";
-                renderFolderSelect();
+                syncNoteMetaControls();
             } else {
                 noteTitle.textContent  = "📝 No Note Selected";
                 setEditorContent("");
-                noteChapterInput.value = "";
-                noteFolderSelect.innerHTML = "";
+                syncNoteMetaControls();
             }
         }
 
@@ -491,8 +668,7 @@ function renderNoteCard(note) {
         currentNote            = note;
         noteTitle.textContent  = "📝 " + note.title;
         setEditorContent(note.content);
-        noteChapterInput.value = note.chapter || "";
-        renderFolderSelect();
+        syncNoteMetaControls();
         renderNotes(filterNotes(noteSearch.value));
     });
 
