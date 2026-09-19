@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Flashcards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/flashcards.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="flora-animated">
+    <header class="flashcards-nav">
+        <a href="index.html" class="flashcards-logo">Flora</a>
+        <nav class="flashcards-nav-links" aria-label="Flashcards navigation">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="notes.html">Notes</a>
+            <a href="flashcards.html" class="active">Flashcards</a>
+        </nav>
+        <span class="flashcards-avatar" aria-label="Local student profile">S</span>
+    </header>
+
+    <main class="flashcards-page fade-in">
+        <aside class="flashcards-sidebar">
+            <a href="dashboard.html" class="flashcards-back">Back to Dashboard</a>
+
+            <div class="flashcards-sidebar-header">
+                <div>
+                    <h1>Flashcards</h1>
+                    <p>Build your own study deck.</p>
+                </div>
+                <button type="button" class="primary-btn" id="new-flashcard-btn">+ New Card</button>
+                <button type="button" class="study-deck-btn" id="study-flashcards-btn">Study Cards</button>
+            </div>
+
+            <div class="flashcard-filters">
+                <div class="flashcard-filter-heading">
+                    <h2>View Cards</h2>
+                    <button type="button" id="clear-flashcard-filters">Clear</button>
+                </div>
+
+                <label for="flashcard-subject-filter">Subject</label>
+                <select id="flashcard-subject-filter"></select>
+
+                <label for="flashcard-chapter-filter">Chapter</label>
+                <select id="flashcard-chapter-filter"></select>
+
+                <p id="flashcard-filter-context" class="flashcard-filter-context"></p>
+            </div>
+
+            <label class="flashcard-search" for="flashcard-search">
+                <span class="sr-only">Search flashcards</span>
+                <input type="search" id="flashcard-search" placeholder="Search flashcards...">
+            </label>
+
+            <div class="flashcard-list-header">
+                <span id="flashcard-result-count">0 cards</span>
+            </div>
+
+            <div class="flashcard-list" id="flashcard-list"></div>
+        </aside>
+
+        <section class="flashcard-workspace slide-up">
+            <div class="flashcard-workspace-header" id="flashcard-editor-header">
+                <div>
+                    <p class="flashcard-eyebrow">Card editor</p>
+                    <h2 id="flashcard-editor-title">Select a flashcard</h2>
+                </div>
+                <span id="flashcard-save-status" class="flashcard-save-status hidden" aria-live="polite"></span>
+            </div>
+
+            <form id="flashcard-form" class="flashcard-form is-hidden">
+                <input type="hidden" id="flashcard-id">
+
+                <div class="flashcard-meta-row">
+                    <label>
+                        <span>Subject</span>
+                        <select id="flashcard-subject-select"></select>
+                    </label>
+                    <label>
+                        <span>Chapter</span>
+                        <select id="flashcard-chapter-select"></select>
+                    </label>
+                </div>
+
+                <label class="flashcard-field" for="flashcard-front">
+                    <span>Front / Question</span>
+                    <textarea id="flashcard-front" rows="6" maxlength="500" placeholder="What do you want to remember?" required></textarea>
+                </label>
+
+                <label class="flashcard-field" for="flashcard-back">
+                    <span>Back / Answer</span>
+                    <textarea id="flashcard-back" rows="8" maxlength="1000" placeholder="Write the answer or explanation." required></textarea>
+                </label>
+
+                <p id="flashcard-form-error" class="flashcard-form-error" role="alert"></p>
+
+                <div class="flashcard-form-actions">
+                    <button type="button" class="flashcard-delete-btn" id="delete-flashcard-btn" hidden>Delete Card</button>
+                    <button type="submit" class="primary-btn" id="save-flashcard-btn">Save Card</button>
+                </div>
+            </form>
+
+            <div class="flashcard-editor-empty" id="flashcard-editor-empty">
+                <span>F</span>
+                <h2>No card selected</h2>
+                <p>Select a card from the list or create a new one.</p>
+                <button type="button" class="primary-btn" id="empty-new-flashcard-btn">Create Flashcard</button>
+            </div>
+
+            <section class="study-session is-hidden" id="study-session" aria-labelledby="study-session-title">
+                <div class="study-session-header">
+                    <div>
+                        <p class="flashcard-eyebrow">Study session</p>
+                        <h2 id="study-session-title">Active recall</h2>
+                    </div>
+                    <button type="button" class="study-exit-btn" id="exit-study-btn">Exit Session</button>
+                </div>
+
+                <div class="study-progress-row">
+                    <span id="study-card-position">Card 1 of 1</span>
+                    <span id="study-context-label">All flashcards</span>
+                </div>
+                <div class="study-progress-track"><span id="study-progress-fill"></span></div>
+
+                <button type="button" class="study-card" id="study-card" aria-label="Reveal flashcard answer">
+                    <span class="study-card-side-label" id="study-card-side-label">Question</span>
+                    <span class="study-card-content" id="study-card-content"></span>
+                    <span class="study-card-hint" id="study-card-hint">Click to reveal the answer</span>
+                </button>
+
+                <div class="study-rating-actions is-hidden" id="study-rating-actions">
+                    <button type="button" class="review-again-btn" id="review-again-btn">Review Again</button>
+                    <button type="button" class="know-it-btn" id="know-it-btn">Know It</button>
+                </div>
+            </section>
+
+            <section class="study-summary is-hidden" id="study-summary" aria-labelledby="study-summary-title">
+                <span class="study-summary-mark">F</span>
+                <p class="flashcard-eyebrow">Session complete</p>
+                <h2 id="study-summary-title">Good work</h2>
+                <p>You reviewed <strong id="summary-total">0</strong> cards.</p>
+                <div class="study-summary-results">
+                    <div><strong id="summary-known">0</strong><span>Knew it</span></div>
+                    <div><strong id="summary-review">0</strong><span>Review again</span></div>
+                </div>
+                <div class="study-summary-actions">
+                    <button type="button" class="secondary-study-btn" id="back-to-editor-btn">Back to Cards</button>
+                    <button type="button" class="primary-btn" id="restart-study-btn">Study Again</button>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="js/flashcards.js"></script>
+</body>
+</html>

@@ -17,6 +17,10 @@ const saveStatus       = document.getElementById("save-status");
 const noteFolderSelect = document.getElementById("note-folder-select");
 const noteSubjectSelect = document.getElementById("note-subject-select");
 const noteChapterSelect = document.getElementById("note-chapter-select");
+const noteSubjectFilter = document.getElementById("note-subject-filter");
+const noteChapterFilter = document.getElementById("note-chapter-filter");
+const clearNoteFilters = document.getElementById("clear-note-filters");
+const noteFilterContext = document.getElementById("notes-filter-context");
 const toolbarBtns      = document.querySelectorAll(".toolbar-btn");
 
 // ── Constants ────────────────────────────────────────────────
@@ -30,11 +34,14 @@ let currentFolder = null;
 let notes         = [];
 let currentNote   = null;
 let saveTimer     = null;   // debounce handle for save indicator
+let saveHideTimer = null;
 let subjects      = [];
 
 const noteContext = new URLSearchParams(window.location.search);
-let pendingSubjectId = noteContext.get("subject") || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
-let pendingChapterId = noteContext.get("chapter") || "";
+let activeSubjectFilter = noteContext.get("subject") || "";
+let activeChapterFilter = activeSubjectFilter ? (noteContext.get("chapter") || "") : "";
+let pendingSubjectId = activeSubjectFilter || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
+let pendingChapterId = activeChapterFilter;
 
 // ── Boot ─────────────────────────────────────────────────────
 newNoteBtn.addEventListener("click", createNote);
@@ -57,8 +64,13 @@ newFolderInput.addEventListener("blur", () => {
 });
 
 toolbarBtns.forEach(btn => {
+    // Keep the editor selection active when a toolbar button is pressed.
+    btn.addEventListener("mousedown", event => event.preventDefault());
+
     btn.addEventListener("click", event => {
         event.preventDefault();
+        if (!currentNote) return;
+
         const command = btn.dataset.command;
         const value   = btn.dataset.value || null;
 
@@ -68,6 +80,31 @@ toolbarBtns.forEach(btn => {
         // Treat toolbar clicks as an edit so the note is saved
         noteEditor.dispatchEvent(new Event("input", { bubbles: true }));
     });
+});
+
+noteTitle.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        noteEditor.focus();
+    }
+});
+
+noteTitle.addEventListener("paste", event => {
+    event.preventDefault();
+    const plainText = event.clipboardData.getData("text/plain").replace(/\s+/g, " ");
+    document.execCommand("insertText", false, plainText);
+});
+
+noteTitle.addEventListener("input", () => {
+    if (!currentNote) return;
+
+    currentNote.title = getEditableTitle() || "Untitled Note";
+    currentNote.updatedAt = Date.now();
+
+    saveNotes();
+    renderFolders();
+    renderNotes(filterNotes(noteSearch.value));
+    showSaveStatus();
 });
 
 noteFolderSelect.addEventListener("change", () => {
@@ -126,12 +163,51 @@ noteChapterSelect.addEventListener("change", () => {
     showSaveStatus();
 });
 
+noteSubjectFilter.addEventListener("change", () => {
+    activeSubjectFilter = noteSubjectFilter.value;
+    activeChapterFilter = "";
+
+    if (activeSubjectFilter) {
+        pendingSubjectId = activeSubjectFilter;
+        pendingChapterId = "";
+    }
+
+    renderNoteFilters();
+    syncCurrentNoteToFilters();
+    renderNotes(filterNotes(noteSearch.value));
+    updateFilterUrl();
+});
+
+noteChapterFilter.addEventListener("change", () => {
+    activeChapterFilter = noteChapterFilter.value;
+
+    if (activeChapterFilter) {
+        pendingSubjectId = activeSubjectFilter;
+        pendingChapterId = activeChapterFilter;
+    }
+
+    renderNoteFilters();
+    syncCurrentNoteToFilters();
+    renderNotes(filterNotes(noteSearch.value));
+    updateFilterUrl();
+});
+
+clearNoteFilters.addEventListener("click", () => {
+    activeSubjectFilter = "";
+    activeChapterFilter = "";
+    renderNoteFilters();
+    syncCurrentNoteToFilters();
+    renderNotes(filterNotes(noteSearch.value));
+    updateFilterUrl();
+});
+
 loadSubjects();
 loadFolders();
 loadNotes();
 renderFolders();
 renderSubjectSelect();
 renderChapterSelect();
+renderNoteFilters();
 renderNotes();
 
 // ============================================================
@@ -152,6 +228,15 @@ function loadSubjects() {
     if (!subjects.some(subject => subject.id === pendingSubjectId)) {
         pendingSubjectId = "";
         pendingChapterId = "";
+    }
+
+    if (!subjects.some(subject => subject.id === activeSubjectFilter)) {
+        activeSubjectFilter = "";
+        activeChapterFilter = "";
+    }
+
+    if (activeChapterFilter && !findChapter(activeSubjectFilter, activeChapterFilter)) {
+        activeChapterFilter = "";
     }
 }
 
@@ -213,6 +298,100 @@ function syncNoteMetaControls() {
     renderFolderSelect();
     renderSubjectSelect();
     renderChapterSelect();
+}
+
+function renderNoteFilters() {
+    noteSubjectFilter.innerHTML = "";
+
+    const allSubjectsOption = document.createElement("option");
+    allSubjectsOption.value = "";
+    allSubjectsOption.textContent = "All subjects";
+    noteSubjectFilter.appendChild(allSubjectsOption);
+
+    subjects.forEach(subject => {
+        const option = document.createElement("option");
+        option.value = subject.id;
+        option.textContent = subject.name;
+        option.selected = subject.id === activeSubjectFilter;
+        noteSubjectFilter.appendChild(option);
+    });
+
+    noteChapterFilter.innerHTML = "";
+    const allChaptersOption = document.createElement("option");
+    allChaptersOption.value = "";
+    allChaptersOption.textContent = "All chapters";
+    noteChapterFilter.appendChild(allChaptersOption);
+
+    const activeSubject = findSubject(activeSubjectFilter);
+    const chapters = activeSubject && Array.isArray(activeSubject.chapters)
+        ? activeSubject.chapters
+        : [];
+
+    chapters.forEach(chapter => {
+        const option = document.createElement("option");
+        option.value = chapter.id;
+        option.textContent = chapter.name;
+        option.selected = chapter.id === activeChapterFilter;
+        noteChapterFilter.appendChild(option);
+    });
+
+    noteChapterFilter.disabled = !activeSubjectFilter || chapters.length === 0;
+    clearNoteFilters.hidden = !activeSubjectFilter && !activeChapterFilter;
+
+    const activeChapter = findChapter(activeSubjectFilter, activeChapterFilter);
+    noteFilterContext.textContent = activeSubject
+        ? `${activeSubject.name}${activeChapter ? ` / ${activeChapter.name}` : " / All chapters"}`
+        : "Showing notes from all subjects";
+}
+
+function updateFilterUrl() {
+    const url = new URL(window.location.href);
+
+    if (activeSubjectFilter) {
+        url.searchParams.set("subject", activeSubjectFilter);
+    } else {
+        url.searchParams.delete("subject");
+    }
+
+    if (activeChapterFilter) {
+        url.searchParams.set("chapter", activeChapterFilter);
+    } else {
+        url.searchParams.delete("chapter");
+    }
+
+    window.history.replaceState({}, "", url);
+}
+
+function getVisibleNotes(query = "") {
+    const filtered = filterNotes(query);
+
+    if (!currentFolder || currentFolder.id === DEFAULT_FOLDER.id) {
+        return filtered;
+    }
+
+    return filtered.filter(note => note.folderId === currentFolder.id);
+}
+
+function syncCurrentNoteToFilters() {
+    const visibleNotes = getVisibleNotes(noteSearch.value);
+
+    if (currentNote && visibleNotes.some(note => note.id === currentNote.id)) {
+        return;
+    }
+
+    currentNote = visibleNotes[0] || null;
+
+    if (currentNote) {
+        setNoteTitle(currentNote.title);
+        setEditorContent(currentNote.content);
+    } else {
+        pendingSubjectId = activeSubjectFilter || pendingSubjectId;
+        pendingChapterId = activeChapterFilter;
+        setNoteTitle("");
+        setEditorContent("");
+    }
+
+    syncNoteMetaControls();
 }
 
 // ============================================================
@@ -298,10 +477,15 @@ function deleteFolder(folder) {
 function selectFolder(folder) {
     currentFolder = folder;
     renderFolders();
+    syncCurrentNoteToFilters();
     renderNotes(filterNotes(noteSearch.value));
 }
 
 function countNotesInFolder(folderId) {
+    if (folderId === DEFAULT_FOLDER.id) {
+        return notes.length;
+    }
+
     return notes.filter(note => note.folderId === folderId).length;
 }
 
@@ -357,13 +541,14 @@ function createNote() {
         chapter:    selectedChapter ? selectedChapter.name : "",
         title:     "Untitled Note",
         content:   "",
+        schemaVersion: 2,
         updatedAt: Date.now()
     };
 
     notes.push(note);
     currentNote = note;
 
-    noteTitle.textContent    = "📝 " + note.title;
+    setNoteTitle(note.title);
     setEditorContent("");
     noteSearch.value         = "";
 
@@ -402,6 +587,9 @@ function loadNotes() {
         }
 
         notes.forEach(note => {
+            note.title = String(note.title || "Untitled Note");
+            note.content = String(note.content || "");
+
             if (!note.updatedAt) {
                 note.updatedAt = Date.now();
             }
@@ -415,6 +603,11 @@ function loadNotes() {
             note.subjectId = note.subjectId || "";
             note.chapterId = note.chapterId || "";
             note.chapter = note.chapter || "";
+
+            if (note.schemaVersion !== 2) {
+                note.content = removeLegacyTitleFromContent(note.content, note.title);
+                note.schemaVersion = 2;
+            }
 
             if (note.subjectId && !findSubject(note.subjectId)) {
                 note.subjectId = "";
@@ -463,7 +656,7 @@ function loadNotes() {
         }
 
         if (!currentNote) {
-            noteTitle.textContent = "📝 No Note Selected";
+            setNoteTitle("");
             setEditorContent("");
             syncNoteMetaControls();
             saveNotes();
@@ -476,7 +669,7 @@ function loadNotes() {
             currentFolder = noteFolder;
         }
 
-        noteTitle.textContent    = "📝 " + currentNote.title;
+        setNoteTitle(currentNote.title);
         setEditorContent(currentNote.content);
         syncNoteMetaControls();
         saveNotes();
@@ -490,6 +683,7 @@ function showSaveStatus() {
     if (!saveStatus) return;
 
     clearTimeout(saveTimer);
+    clearTimeout(saveHideTimer);
 
     saveStatus.textContent = "Saving…";
     saveStatus.className   = "save-status saving";
@@ -498,7 +692,7 @@ function showSaveStatus() {
         saveStatus.textContent = "Saved ✓";
         saveStatus.className   = "save-status saved";
 
-        setTimeout(() => {
+        saveHideTimer = setTimeout(() => {
             saveStatus.className = "save-status hidden";
         }, 2000);
     }, 600);
@@ -507,6 +701,14 @@ function showSaveStatus() {
 // ============================================================
 //  EDITOR HELPERS
 // ============================================================
+function setNoteTitle(title) {
+    noteTitle.textContent = title || "";
+}
+
+function getEditableTitle() {
+    return noteTitle.innerText.replace(/\s+/g, " ").trim();
+}
+
 function setEditorContent(html) {
     noteEditor.innerHTML = html || "";
 }
@@ -536,11 +738,20 @@ function renderFolderSelect() {
 // ============================================================
 function filterNotes(query) {
     const q = query.trim().toLowerCase();
-    if (!q) return notes;
 
     return notes.filter(note => {
+        if (activeSubjectFilter && note.subjectId !== activeSubjectFilter) {
+            return false;
+        }
+
+        if (activeChapterFilter && note.chapterId !== activeChapterFilter) {
+            return false;
+        }
+
+        if (!q) return true;
+
         const inTitle   = note.title.toLowerCase().includes(q);
-        const inContent = note.content.toLowerCase().includes(q);
+        const inContent = stripHtml(note.content).toLowerCase().includes(q);
         const inChapter = note.chapter && note.chapter.toLowerCase().includes(q);
         const subject = findSubject(note.subjectId);
         const inSubject = subject && subject.name.toLowerCase().includes(q);
@@ -549,6 +760,7 @@ function filterNotes(query) {
 }
 
 noteSearch.addEventListener("input", () => {
+    syncCurrentNoteToFilters();
     renderNotes(filterNotes(noteSearch.value));
 });
 
@@ -558,7 +770,69 @@ noteSearch.addEventListener("input", () => {
 function stripHtml(html) {
     const tmp = document.createElement("div");
     tmp.innerHTML = html || "";
-    return tmp.textContent || tmp.innerText || "";
+    return tmp.innerText || tmp.textContent || "";
+}
+
+function removeLegacyTitleFromContent(content, title) {
+    const html = content || "";
+    const expectedTitle = String(title || "").trim();
+
+    if (!html || !expectedTitle || expectedTitle === "Untitled Note") {
+        return html;
+    }
+
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    const firstLine = (container.innerText || container.textContent || "")
+        .replace(/\r/g, "")
+        .split("\n")[0]
+        .trim();
+
+    if (firstLine !== expectedTitle) {
+        return html;
+    }
+
+    while (container.firstChild &&
+        container.firstChild.nodeType === Node.TEXT_NODE &&
+        !container.firstChild.textContent.trim()) {
+        container.firstChild.remove();
+    }
+
+    const firstNode = container.firstChild;
+    let removed = false;
+
+    if (firstNode && firstNode.nodeType === Node.TEXT_NODE) {
+        const text = firstNode.textContent.replace(/\r/g, "");
+        const newlineIndex = text.indexOf("\n");
+        const firstTextLine = (newlineIndex >= 0 ? text.slice(0, newlineIndex) : text).trim();
+
+        if (firstTextLine === expectedTitle) {
+            if (newlineIndex >= 0) {
+                firstNode.textContent = text.slice(newlineIndex + 1);
+            } else {
+                firstNode.remove();
+            }
+            removed = true;
+        }
+    } else if (firstNode && firstNode.nodeType === Node.ELEMENT_NODE) {
+        const nodeText = (firstNode.innerText || firstNode.textContent || "").trim();
+        if (nodeText === expectedTitle) {
+            firstNode.remove();
+            removed = true;
+        }
+    }
+
+    if (!removed) {
+        return html;
+    }
+
+    while (container.firstChild &&
+        ((container.firstChild.nodeType === Node.TEXT_NODE && !container.firstChild.textContent.trim()) ||
+        (container.firstChild.nodeType === Node.ELEMENT_NODE && container.firstChild.tagName === "BR"))) {
+        container.firstChild.remove();
+    }
+
+    return container.innerHTML;
 }
 
 function escapeHtml(str) {
@@ -571,9 +845,7 @@ function escapeHtml(str) {
 }
 
 function getPreview(content) {
-    const text  = stripHtml(content);
-    const lines = text.split("\n");
-    const body  = lines.slice(1).join(" ").trim();
+    const body = stripHtml(content).replace(/\s+/g, " ").trim();
 
     if (!body) return "No content yet";
 
@@ -642,31 +914,24 @@ function renderNoteCard(note) {
         );
         if (!confirmed) return;
 
+        const deletedCurrentNote = currentNote && currentNote.id === note.id;
         notes = notes.filter(item => item.id !== note.id);
-
-        if (currentNote && currentNote.id === note.id) {
-            currentNote = notes[0] || null;
-
-            if (currentNote) {
-                noteTitle.textContent  = "📝 " + currentNote.title;
-                setEditorContent(currentNote.content);
-                syncNoteMetaControls();
-            } else {
-                noteTitle.textContent  = "📝 No Note Selected";
-                setEditorContent("");
-                syncNoteMetaControls();
-            }
-        }
 
         saveNotes();
         renderFolders();
+
+        if (deletedCurrentNote) {
+            currentNote = null;
+            syncCurrentNoteToFilters();
+        }
+
         renderNotes(filterNotes(noteSearch.value));
     });
 
     // ── Select handler ────────────────────────────────────
     noteCard.addEventListener("click", () => {
         currentNote            = note;
-        noteTitle.textContent  = "📝 " + note.title;
+        setNoteTitle(note.title);
         setEditorContent(note.content);
         syncNoteMetaControls();
         renderNotes(filterNotes(noteSearch.value));
@@ -695,10 +960,10 @@ function groupNotesByChapter(list) {
 function renderNotes(list = notes) {
     notesList.innerHTML = "";
 
-    // Only show notes that belong to the currently selected folder
-    const folderNotes = list.filter(note =>
-        currentFolder && note.folderId === currentFolder.id
-    );
+    // The default folder is the complete library; custom folders narrow it down.
+    const folderNotes = currentFolder && currentFolder.id !== DEFAULT_FOLDER.id
+        ? list.filter(note => note.folderId === currentFolder.id)
+        : list;
 
     // ── Empty state ──────────────────────────────────────────
     if (folderNotes.length === 0) {
@@ -707,9 +972,14 @@ function renderNotes(list = notes) {
 
         const isSearching    = noteSearch.value.trim().length > 0;
         const folderName     = currentFolder ? currentFolder.name : "this folder";
+        const activeSubject = findSubject(activeSubjectFilter);
+        const activeChapter = findChapter(activeSubjectFilter, activeChapterFilter);
+        const viewName = activeChapter
+            ? `${activeSubject.name} / ${activeChapter.name}`
+            : (activeSubject ? activeSubject.name : folderName);
         emptyMsg.textContent = isSearching
-            ? `No notes match your search in ${folderName}.`
-            : `No notes in ${folderName} yet.\nCreate your first note!`;
+            ? `No notes match your search in ${viewName}.`
+            : `No notes in ${viewName} yet.\nCreate your first note!`;
 
         notesList.appendChild(emptyMsg);
         return;
@@ -741,13 +1011,8 @@ function renderNotes(list = notes) {
 noteEditor.addEventListener("input", () => {
     if (!currentNote) return;
 
-    // Save content
+    // Store the rich-text body independently from the note title.
     currentNote.content = getEditorContent();
-
-    // Derive title from first line of visible text
-    const firstLine       = noteEditor.innerText.split("\n")[0].trim();
-    currentNote.title     = firstLine || "Untitled Note";
-    noteTitle.textContent = "📝 " + currentNote.title;
 
     // Stamp the edit time
     currentNote.updatedAt = Date.now();
