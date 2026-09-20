@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Quiz Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="flora-animated">
+    <header class="quiz-nav">
+        <a href="index.html" class="quiz-logo">Flora</a>
+        <nav class="quiz-nav-links" aria-label="Quiz navigation">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="notes.html">Notes</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="quiz.html" class="active">Quizzes</a>
+        </nav>
+        <span class="quiz-avatar" aria-label="Local student profile">S</span>
+    </header>
+
+    <main class="quiz-page fade-in">
+        <aside class="quiz-sidebar">
+            <a href="dashboard.html" class="quiz-back">Back to Dashboard</a>
+
+            <div class="quiz-sidebar-header">
+                <h1>Quizzes</h1>
+                <p>Build multiple-choice practice sets.</p>
+                <button type="button" class="primary-btn" id="new-quiz-btn">+ New Quiz</button>
+            </div>
+
+            <div class="quiz-filters">
+                <div class="quiz-filter-heading">
+                    <h2>View Quizzes</h2>
+                    <button type="button" id="clear-quiz-filters">Clear</button>
+                </div>
+
+                <label for="quiz-subject-filter">Subject</label>
+                <select id="quiz-subject-filter"></select>
+
+                <label for="quiz-chapter-filter">Chapter</label>
+                <select id="quiz-chapter-filter"></select>
+
+                <p id="quiz-filter-context" class="quiz-filter-context"></p>
+            </div>
+
+            <label class="quiz-search" for="quiz-search">
+                <span class="sr-only">Search quizzes</span>
+                <input type="search" id="quiz-search" placeholder="Search quizzes...">
+            </label>
+
+            <div class="quiz-list-header">
+                <span id="quiz-result-count">0 quizzes</span>
+            </div>
+
+            <div class="quiz-list" id="quiz-list"></div>
+        </aside>
+
+        <section class="quiz-workspace slide-up">
+            <div class="quiz-workspace-header">
+                <div>
+                    <p class="quiz-eyebrow">Quiz builder</p>
+                    <h2 id="quiz-editor-title">Select a quiz</h2>
+                </div>
+                <span id="quiz-save-status" class="quiz-save-status hidden" aria-live="polite"></span>
+            </div>
+
+            <form id="quiz-form" class="quiz-form is-hidden">
+                <input type="hidden" id="quiz-id">
+
+                <div class="quiz-meta-row">
+                    <label>
+                        <span>Subject</span>
+                        <select id="quiz-subject-select"></select>
+                    </label>
+                    <label>
+                        <span>Chapter</span>
+                        <select id="quiz-chapter-select"></select>
+                    </label>
+                </div>
+
+                <label class="quiz-field" for="quiz-title">
+                    <span>Quiz title</span>
+                    <input type="text" id="quiz-title" maxlength="80" placeholder="e.g. Cell Biology Review" required>
+                </label>
+
+                <label class="quiz-field" for="quiz-description">
+                    <span>Description <small>Optional</small></span>
+                    <textarea id="quiz-description" rows="3" maxlength="220" placeholder="What will this quiz cover?"></textarea>
+                </label>
+
+                <div class="questions-heading">
+                    <div>
+                        <h3>Questions</h3>
+                        <p id="question-count">0 questions</p>
+                    </div>
+                    <button type="button" class="add-question-btn" id="add-question-btn">+ Add Question</button>
+                </div>
+
+                <div class="question-list" id="question-list"></div>
+
+                <p id="quiz-form-error" class="quiz-form-error" role="alert"></p>
+
+                <div class="quiz-form-actions">
+                    <button type="button" class="quiz-delete-btn" id="delete-quiz-btn" hidden>Delete Quiz</button>
+                    <button type="submit" class="primary-btn">Save Quiz</button>
+                </div>
+            </form>
+
+            <div class="quiz-editor-empty" id="quiz-editor-empty">
+                <span>Q</span>
+                <h2>No quiz selected</h2>
+                <p>Select a quiz from the list or build a new one.</p>
+                <button type="button" class="primary-btn" id="empty-new-quiz-btn">Create Quiz</button>
+            </div>
+        </section>
+    </main>
+
+    <dialog class="question-dialog" id="question-dialog" aria-labelledby="question-dialog-title">
+        <form method="dialog" class="question-form" id="question-form">
+            <div class="question-dialog-header">
+                <div>
+                    <p class="quiz-eyebrow">Multiple choice</p>
+                    <h2 id="question-dialog-title">Add question</h2>
+                </div>
+                <button type="button" class="question-close-btn" id="question-dialog-close" aria-label="Close">&times;</button>
+            </div>
+
+            <input type="hidden" id="question-id">
+
+            <label for="question-prompt">Question</label>
+            <textarea id="question-prompt" rows="3" maxlength="500" placeholder="Write the question." required></textarea>
+
+            <fieldset class="option-fields">
+                <legend>Answer options</legend>
+                <p>Select the radio button beside the correct answer.</p>
+
+                <label><input type="radio" name="correct-option" value="0" checked><span>A</span><input type="text" class="question-option" maxlength="250" placeholder="Option A" required></label>
+                <label><input type="radio" name="correct-option" value="1"><span>B</span><input type="text" class="question-option" maxlength="250" placeholder="Option B" required></label>
+                <label><input type="radio" name="correct-option" value="2"><span>C</span><input type="text" class="question-option" maxlength="250" placeholder="Option C" required></label>
+                <label><input type="radio" name="correct-option" value="3"><span>D</span><input type="text" class="question-option" maxlength="250" placeholder="Option D" required></label>
+            </fieldset>
+
+            <p id="question-form-error" class="quiz-form-error" role="alert"></p>
+
+            <div class="question-form-actions">
+                <button type="button" class="secondary-quiz-btn" id="question-cancel-btn">Cancel</button>
+                <button type="submit" class="primary-btn" id="question-save-btn">Add Question</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/quiz.js"></script>
+</body>
+</html>
