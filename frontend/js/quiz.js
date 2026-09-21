@@ -39,6 +39,28 @@ const questionOptionInputs = Array.from(document.querySelectorAll(".question-opt
 const correctOptionInputs = Array.from(document.querySelectorAll('input[name="correct-option"]'));
 const questionFormError = document.getElementById("question-form-error");
 
+const startQuizBtn = document.getElementById("start-quiz-btn");
+const takeQuizSection = document.getElementById("take-quiz");
+const exitTakeQuizBtn = document.getElementById("exit-take-quiz-btn");
+const takeQuizTitle = document.getElementById("take-quiz-title");
+const takeQuizPosition = document.getElementById("take-quiz-position");
+const takeQuizContext = document.getElementById("take-quiz-context");
+const takeQuizProgressFill = document.getElementById("take-quiz-progress-fill");
+const takeQuizPrompt = document.getElementById("take-quiz-prompt");
+const takeQuizOptions = document.getElementById("take-quiz-options");
+const takeQuizPrev = document.getElementById("take-quiz-prev");
+const takeQuizNext = document.getElementById("take-quiz-next");
+const takeQuizSubmit = document.getElementById("take-quiz-submit");
+const quizResultsSection = document.getElementById("quiz-results");
+const resultsScore = document.getElementById("results-score");
+const resultsTotal = document.getElementById("results-total");
+const resultsPercentage = document.getElementById("results-percentage");
+const resultsReview = document.getElementById("quiz-results-review");
+const resultsBackBtn = document.getElementById("results-back-btn");
+const resultsRetakeBtn = document.getElementById("results-retake-btn");
+
+const ATTEMPTS_STORAGE_KEY = "flora-quiz-attempts";
+
 const pageContext = new URLSearchParams(window.location.search);
 let activeSubjectFilter = pageContext.get("subject") || "";
 let activeChapterFilter = activeSubjectFilter ? (pageContext.get("chapter") || "") : "";
@@ -50,12 +72,20 @@ let quizzes = loadQuizzes();
 let currentQuizId = null;
 let draftQuestions = [];
 let saveStatusTimer = null;
+let takeQuizData = null;
 
 newQuizBtn.addEventListener("click", openNewQuiz);
 emptyNewQuizBtn.addEventListener("click", openNewQuiz);
 quizForm.addEventListener("submit", saveQuizFromForm);
 deleteQuizBtn.addEventListener("click", deleteCurrentQuiz);
 addQuestionBtn.addEventListener("click", () => openQuestionDialog());
+startQuizBtn.addEventListener("click", startTakingQuiz);
+exitTakeQuizBtn.addEventListener("click", exitTakeQuiz);
+takeQuizPrev.addEventListener("click", () => navigateTakeQuiz(-1));
+takeQuizNext.addEventListener("click", () => navigateTakeQuiz(1));
+takeQuizSubmit.addEventListener("click", submitQuiz);
+resultsBackBtn.addEventListener("click", exitTakeQuiz);
+resultsRetakeBtn.addEventListener("click", startTakingQuiz);
 
 subjectSelect.addEventListener("change", () => {
     renderEditorChapterSelect("", subjectSelect.value);
@@ -316,7 +346,11 @@ function renderQuizList() {
         const title = document.createElement("strong");
         title.textContent = quiz.title;
         const meta = document.createElement("span");
-        meta.textContent = `${quiz.questions.length} ${quiz.questions.length === 1 ? "question" : "questions"}`;
+        const questionLabel = `${quiz.questions.length} ${quiz.questions.length === 1 ? "question" : "questions"}`;
+        const attemptLabel = quiz.attemptCount
+            ? ` · ${quiz.attemptCount} ${quiz.attemptCount === 1 ? "attempt" : "attempts"}${quiz.bestScore != null ? ` · Best: ${quiz.bestScore}%` : ""}`
+            : "";
+        meta.textContent = questionLabel + attemptLabel;
 
         item.append(contextLabel, title, meta);
         item.addEventListener("click", () => selectQuiz(quiz.id));
@@ -376,6 +410,7 @@ function selectQuiz(quizId) {
     quizFormError.textContent = "";
     quizEditorTitle.textContent = "Edit quiz";
     deleteQuizBtn.hidden = false;
+    startQuizBtn.hidden = quiz.questions.length === 0;
 
     renderEditorSubjectSelect(quiz.subjectId);
     renderEditorChapterSelect(quiz.chapterId, quiz.subjectId);
@@ -392,6 +427,7 @@ function openNewQuiz() {
     quizFormError.textContent = "";
     quizEditorTitle.textContent = "New quiz";
     deleteQuizBtn.hidden = true;
+    startQuizBtn.hidden = true;
 
     const subjectId = activeSubjectFilter || pendingSubjectId;
     const chapterId = activeChapterFilter || pendingChapterId;
@@ -631,4 +667,222 @@ function updateFilterUrl() {
     if (activeChapterFilter) url.searchParams.set("chapter", activeChapterFilter);
     else url.searchParams.delete("chapter");
     window.history.replaceState({}, "", url);
+}
+
+// ============================================================
+//  TAKE QUIZ
+// ============================================================
+function startTakingQuiz() {
+    const quiz = quizzes.find(item => item.id === currentQuizId);
+    if (!quiz || !quiz.questions.length) return;
+
+    takeQuizData = {
+        quizId: quiz.id,
+        questions: cloneQuestions(quiz.questions),
+        answers: new Array(quiz.questions.length).fill(null),
+        currentIndex: 0
+    };
+
+    const subject = findSubject(quiz.subjectId);
+    const chapter = findChapter(quiz.subjectId, quiz.chapterId);
+    const context = [subject && subject.name, chapter && chapter.name].filter(Boolean).join(" / ");
+
+    takeQuizTitle.textContent = quiz.title;
+    takeQuizContext.textContent = context || "";
+
+    quizForm.classList.add("is-hidden");
+    quizEditorEmpty.classList.add("is-hidden");
+    quizResultsSection.classList.add("is-hidden");
+    document.querySelector(".quiz-workspace-header").classList.add("is-hidden");
+    takeQuizSection.classList.remove("is-hidden");
+
+    renderTakeQuizQuestion();
+}
+
+function renderTakeQuizQuestion() {
+    if (!takeQuizData) return;
+
+    const index = takeQuizData.currentIndex;
+    const question = takeQuizData.questions[index];
+    const total = takeQuizData.questions.length;
+    const progress = Math.round((index / total) * 100);
+
+    takeQuizPosition.textContent = `Question ${index + 1} of ${total}`;
+    takeQuizProgressFill.style.width = `${progress}%`;
+    takeQuizPrompt.textContent = question.prompt;
+
+    takeQuizOptions.innerHTML = "";
+    const letters = ["A", "B", "C", "D"];
+    question.options.forEach((option, optionIndex) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "take-quiz-option";
+        if (takeQuizData.answers[index] === optionIndex) {
+            btn.classList.add("selected");
+        }
+
+        const letter = document.createElement("span");
+        letter.className = "take-quiz-option-letter";
+        letter.textContent = letters[optionIndex];
+
+        const text = document.createElement("span");
+        text.textContent = option;
+
+        btn.append(letter, text);
+        btn.addEventListener("click", () => selectTakeQuizAnswer(optionIndex));
+        takeQuizOptions.appendChild(btn);
+    });
+
+    takeQuizPrev.disabled = index === 0;
+
+    const isLastQuestion = index === total - 1;
+    takeQuizNext.classList.toggle("is-hidden", isLastQuestion);
+    takeQuizSubmit.classList.toggle("is-hidden", !isLastQuestion);
+}
+
+function selectTakeQuizAnswer(optionIndex) {
+    if (!takeQuizData) return;
+    takeQuizData.answers[takeQuizData.currentIndex] = optionIndex;
+    renderTakeQuizQuestion();
+}
+
+function navigateTakeQuiz(direction) {
+    if (!takeQuizData) return;
+    const newIndex = takeQuizData.currentIndex + direction;
+    if (newIndex < 0 || newIndex >= takeQuizData.questions.length) return;
+    takeQuizData.currentIndex = newIndex;
+    renderTakeQuizQuestion();
+}
+
+function submitQuiz() {
+    if (!takeQuizData) return;
+
+    const unanswered = takeQuizData.answers.filter(a => a === null).length;
+    if (unanswered > 0) {
+        const proceed = confirm(
+            `You have ${unanswered} unanswered ${unanswered === 1 ? "question" : "questions"}.\n\nSubmit anyway?`
+        );
+        if (!proceed) return;
+    }
+
+    const quiz = quizzes.find(item => item.id === takeQuizData.quizId);
+    if (!quiz) return;
+
+    let score = 0;
+    takeQuizData.questions.forEach((question, index) => {
+        if (takeQuizData.answers[index] === question.correctIndex) {
+            score += 1;
+        }
+    });
+
+    const total = takeQuizData.questions.length;
+    const percentage = Math.round((score / total) * 100);
+
+    const attempt = {
+        id: createId("attempt"),
+        quizId: quiz.id,
+        answers: [...takeQuizData.answers],
+        score,
+        totalQuestions: total,
+        percentage,
+        completedAt: Date.now()
+    };
+
+    saveAttempt(attempt);
+
+    quiz.attemptCount = (quiz.attemptCount || 0) + 1;
+    quiz.lastAttemptAt = Date.now();
+    if (!quiz.bestScore || percentage > quiz.bestScore) {
+        quiz.bestScore = percentage;
+    }
+    saveQuizzes();
+    renderQuizList();
+
+    showResults(takeQuizData, score, total, percentage);
+}
+
+function showResults(data, score, total, percentage) {
+    takeQuizSection.classList.add("is-hidden");
+    quizResultsSection.classList.remove("is-hidden");
+
+    resultsScore.textContent = String(score);
+    resultsTotal.textContent = String(total);
+    resultsPercentage.textContent = String(percentage);
+
+    resultsReview.innerHTML = "";
+    const letters = ["A", "B", "C", "D"];
+
+    data.questions.forEach((question, index) => {
+        const userAnswer = data.answers[index];
+        const isCorrect = userAnswer === question.correctIndex;
+        const isSkipped = userAnswer === null;
+
+        const card = document.createElement("div");
+        card.className = `result-question ${isCorrect ? "is-correct" : (isSkipped ? "" : "is-incorrect")}`;
+
+        const header = document.createElement("div");
+        header.className = "result-question-header";
+
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = String(index + 1).padStart(2, "0");
+
+        const badge = document.createElement("span");
+        badge.className = `result-badge ${isSkipped ? "skipped" : (isCorrect ? "correct" : "incorrect")}`;
+        badge.textContent = isSkipped ? "Skipped" : (isCorrect ? "Correct" : "Incorrect");
+
+        header.append(number, badge);
+
+        const prompt = document.createElement("p");
+        prompt.className = "result-prompt";
+        prompt.textContent = question.prompt;
+
+        card.append(header, prompt);
+
+        if (!isSkipped && !isCorrect) {
+            const yourAnswer = document.createElement("p");
+            yourAnswer.className = "result-answer";
+            yourAnswer.innerHTML = `Your answer: <strong>${letters[userAnswer]}. ${escapeResultHtml(question.options[userAnswer])}</strong>`;
+            card.appendChild(yourAnswer);
+        }
+
+        const correctAnswer = document.createElement("p");
+        correctAnswer.className = "result-answer";
+        correctAnswer.innerHTML = `Correct answer: <strong>${letters[question.correctIndex]}. ${escapeResultHtml(question.options[question.correctIndex])}</strong>`;
+        card.appendChild(correctAnswer);
+
+        resultsReview.appendChild(card);
+    });
+}
+
+function escapeResultHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function exitTakeQuiz() {
+    takeQuizSection.classList.add("is-hidden");
+    quizResultsSection.classList.add("is-hidden");
+    document.querySelector(".quiz-workspace-header").classList.remove("is-hidden");
+    takeQuizData = null;
+
+    if (currentQuizId && quizzes.some(quiz => quiz.id === currentQuizId)) {
+        selectQuiz(currentQuizId);
+    } else {
+        showEmptyEditor();
+    }
+}
+
+function saveAttempt(attempt) {
+    try {
+        const raw = localStorage.getItem(ATTEMPTS_STORAGE_KEY);
+        const attempts = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(attempts)) throw new Error("Invalid attempts data");
+        attempts.push(attempt);
+        localStorage.setItem(ATTEMPTS_STORAGE_KEY, JSON.stringify(attempts));
+    } catch (error) {
+        console.error("Could not save quiz attempt:", error);
+    }
 }

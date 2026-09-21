@@ -109,7 +109,10 @@
 
                 <div class="quiz-form-actions">
                     <button type="button" class="quiz-delete-btn" id="delete-quiz-btn" hidden>Delete Quiz</button>
-                    <button type="submit" class="primary-btn">Save Quiz</button>
+                    <div class="quiz-form-right-actions">
+                        <button type="button" class="start-quiz-btn" id="start-quiz-btn" hidden>Start Quiz</button>
+                        <button type="submit" class="primary-btn">Save Quiz</button>
+                    </div>
                 </div>
             </form>
 
@@ -119,6 +122,49 @@
                 <p>Select a quiz from the list or build a new one.</p>
                 <button type="button" class="primary-btn" id="empty-new-quiz-btn">Create Quiz</button>
             </div>
+
+            <section class="take-quiz is-hidden" id="take-quiz" aria-labelledby="take-quiz-title">
+                <div class="take-quiz-header">
+                    <div>
+                        <p class="quiz-eyebrow">Quiz session</p>
+                        <h2 id="take-quiz-title">Quiz</h2>
+                    </div>
+                    <button type="button" class="take-quiz-exit-btn" id="exit-take-quiz-btn">Exit Quiz</button>
+                </div>
+
+                <div class="take-quiz-progress-row">
+                    <span id="take-quiz-position">Question 1 of 1</span>
+                    <span id="take-quiz-context"></span>
+                </div>
+                <div class="take-quiz-progress-track"><span id="take-quiz-progress-fill"></span></div>
+
+                <div class="take-quiz-question" id="take-quiz-question">
+                    <p class="take-quiz-prompt" id="take-quiz-prompt"></p>
+                    <div class="take-quiz-options" id="take-quiz-options"></div>
+                </div>
+
+                <div class="take-quiz-nav">
+                    <button type="button" class="secondary-quiz-btn" id="take-quiz-prev" disabled>Previous</button>
+                    <button type="button" class="primary-btn" id="take-quiz-next">Next</button>
+                    <button type="button" class="primary-btn take-quiz-submit is-hidden" id="take-quiz-submit">Submit Quiz</button>
+                </div>
+            </section>
+
+            <section class="quiz-results is-hidden" id="quiz-results" aria-labelledby="quiz-results-title">
+                <div class="quiz-results-header">
+                    <span class="quiz-results-mark">Q</span>
+                    <p class="quiz-eyebrow">Quiz complete</p>
+                    <h2 id="quiz-results-title">Results</h2>
+                    <p>You scored <strong id="results-score">0</strong> out of <strong id="results-total">0</strong> (<strong id="results-percentage">0</strong>%)</p>
+                </div>
+
+                <div class="quiz-results-review" id="quiz-results-review"></div>
+
+                <div class="quiz-results-actions">
+                    <button type="button" class="secondary-quiz-btn" id="results-back-btn">Back to Quizzes</button>
+                    <button type="button" class="primary-btn" id="results-retake-btn">Retake Quiz</button>
+                </div>
+            </section>
         </section>
     </main>
 
