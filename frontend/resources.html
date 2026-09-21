@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Resources</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/resources.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="flora-animated">
+    <header class="res-nav">
+        <a href="index.html" class="res-logo">Flora</a>
+        <nav class="res-nav-links" aria-label="Resources navigation">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="notes.html">Notes</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="quiz.html">Quizzes</a>
+            <a href="resources.html" class="active">Resources</a>
+        </nav>
+        <span class="res-avatar" aria-label="Local student profile">S</span>
+    </header>
+
+    <main class="res-page fade-in">
+        <aside class="res-sidebar">
+            <a href="dashboard.html" class="res-back">Back to Dashboard</a>
+
+            <div class="res-sidebar-header">
+                <h1>Resources</h1>
+                <p>Collect study materials in one place.</p>
+                <button type="button" class="primary-btn" id="new-resource-btn">+ Add Resource</button>
+            </div>
+
+            <div class="res-filters">
+                <div class="res-filter-heading">
+                    <h2>Filter</h2>
+                    <button type="button" id="clear-res-filters">Clear</button>
+                </div>
+
+                <label for="res-type-filter">Type</label>
+                <select id="res-type-filter">
+                    <option value="">All types</option>
+                    <option value="link">Link</option>
+                    <option value="video">Video</option>
+                    <option value="book">Book</option>
+                    <option value="document">Document</option>
+                </select>
+
+                <label for="res-subject-filter">Subject</label>
+                <select id="res-subject-filter"></select>
+
+                <label for="res-chapter-filter">Chapter</label>
+                <select id="res-chapter-filter"></select>
+
+                <p id="res-filter-context" class="res-filter-context"></p>
+            </div>
+
+            <label class="res-search" for="res-search">
+                <span class="sr-only">Search resources</span>
+                <input type="search" id="res-search" placeholder="Search resources...">
+            </label>
+
+            <div class="res-list-header">
+                <span id="res-result-count">0 resources</span>
+            </div>
+
+            <div class="res-list" id="res-list"></div>
+        </aside>
+
+        <section class="res-workspace slide-up">
+            <div class="res-workspace-header">
+                <div>
+                    <p class="res-eyebrow">Resource details</p>
+                    <h2 id="res-editor-title">Select a resource</h2>
+                </div>
+                <span id="res-save-status" class="res-save-status hidden" aria-live="polite"></span>
+            </div>
+
+            <form id="res-form" class="res-form is-hidden">
+                <input type="hidden" id="res-id">
+
+                <div class="res-meta-row">
+                    <label>
+                        <span>Type</span>
+                        <select id="res-type-select" required>
+                            <option value="link">Link</option>
+                            <option value="video">Video</option>
+                            <option value="book">Book</option>
+                            <option value="document">Document</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Subject</span>
+                        <select id="res-subject-select"></select>
+                    </label>
+                    <label>
+                        <span>Chapter</span>
+                        <select id="res-chapter-select"></select>
+                    </label>
+                </div>
+
+                <label class="res-field" for="res-title">
+                    <span>Title</span>
+                    <input type="text" id="res-title" maxlength="120" placeholder="e.g. MIT OpenCourseWare — Algorithms" required>
+                </label>
+
+                <div id="url-input-group" class="res-field">
+                    <label for="res-url">
+                        <span>URL <small>Optional</small></span>
+                        <input type="url" id="res-url" maxlength="500" placeholder="https://example.com/resource">
+                    </label>
+                </div>
+
+                <div id="file-input-group" class="res-field is-hidden">
+                    <label for="res-file">
+                        <span>Select File <small>(PDF, MP4, etc.)</small></span>
+                        <div class="file-drop-zone" id="file-drop-zone">
+                            <input type="file" id="res-file" accept=".pdf,.mp4,.ppt,.pptx">
+                            <p id="file-name-display">Click to select or drag and drop</p>
+                        </div>
+                    </label>
+                </div>
+
+                <label class="res-field" for="res-description">
+                    <span>Description <small>Optional</small></span>
+                    <textarea id="res-description" rows="4" maxlength="300" placeholder="What is this resource about?"></textarea>
+                </label>
+
+                <p id="res-form-error" class="res-form-error" role="alert"></p>
+
+                <div class="res-form-actions">
+                    <button type="button" class="res-delete-btn" id="delete-res-btn" hidden>Delete Resource</button>
+                    <button type="submit" class="primary-btn">Save Resource</button>
+                </div>
+            </form>
+
+            <!-- Preview Area -->
+            <div id="res-preview-container" class="res-preview-container is-hidden">
+                <div class="preview-header">
+                    <h3>Preview</h3>
+                    <button type="button" id="close-preview-btn" class="close-preview-btn">&times;</button>
+                </div>
+                <div id="preview-content" class="preview-content">
+                    <!-- Content injected via JS -->
+                </div>
+            </div>
+
+            <div class="res-editor-empty" id="res-editor-empty">
+                <span>R</span>
+                <h2>No resource selected</h2>
+                <p>Select a resource from the list or add a new one.</p>
+                <button type="button" class="primary-btn" id="empty-new-res-btn">Add Resource</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/resources.js"></script>
+</body>
+</html>

@@ -12,6 +12,13 @@ const progressSummary = document.getElementById("subject-progress-summary");
 const chaptersList = document.getElementById("chapters-list");
 const currentChapterNotesLink = document.getElementById("current-chapter-notes-link");
 const subjectNotesLink = document.getElementById("subject-notes-link");
+const subjectNoteCount = document.getElementById("subject-note-count");
+const subjectFlashcardsLink = document.getElementById("subject-flashcards-link");
+const subjectFlashcardCount = document.getElementById("subject-flashcard-count");
+const subjectQuizzesLink = document.getElementById("subject-quizzes-link");
+const subjectQuizCount = document.getElementById("subject-quiz-count");
+const subjectResourcesLink = document.getElementById("subject-resources-link");
+const subjectResourceCount = document.getElementById("subject-resource-count");
 
 const chapterDialog = document.getElementById("chapter-dialog");
 const chapterForm = document.getElementById("chapter-form");
@@ -28,6 +35,10 @@ const newChapterBtn = document.getElementById("new-chapter-btn");
 
 let subjects = loadSubjects();
 let currentSubject = getCurrentSubject();
+const notes = loadNotes();
+const flashcards = loadFlashcards();
+const quizzes = loadQuizzes();
+const studyResources = loadStudyResources();
 
 newChapterBtn.addEventListener("click", () => openChapterDialog());
 chapterDialogClose.addEventListener("click", closeChapterDialog);
@@ -69,6 +80,100 @@ function loadSubjects() {
         console.error("Could not load subjects:", error);
         return [];
     }
+}
+
+function loadNotes() {
+    const raw = localStorage.getItem("flora-notes");
+    if (!raw) return [];
+
+    try {
+        const storedNotes = JSON.parse(raw);
+        return Array.isArray(storedNotes) ? storedNotes : [];
+    } catch (error) {
+        console.error("Could not load notes for chapter counts:", error);
+        return [];
+    }
+}
+
+function loadFlashcards() {
+    const raw = localStorage.getItem("flora-flashcards");
+    if (!raw) return [];
+
+    try {
+        const storedFlashcards = JSON.parse(raw);
+        return Array.isArray(storedFlashcards) ? storedFlashcards : [];
+    } catch (error) {
+        console.error("Could not load flashcards for counts:", error);
+        return [];
+    }
+}
+
+function loadQuizzes() {
+    const raw = localStorage.getItem("flora-quizzes");
+    if (!raw) return [];
+
+    try {
+        const storedQuizzes = JSON.parse(raw);
+        return Array.isArray(storedQuizzes) ? storedQuizzes : [];
+    } catch (error) {
+        console.error("Could not load quizzes for counts:", error);
+        return [];
+    }
+}
+
+function countSubjectNotes(subjectId) {
+    return notes.filter(note => note.subjectId === subjectId).length;
+}
+
+function countChapterNotes(subjectId, chapter) {
+    return notes.filter(note =>
+        note.subjectId === subjectId &&
+        (note.chapterId === chapter.id ||
+            (!note.chapterId && note.chapter && note.chapter.toLowerCase() === chapter.name.toLowerCase()))
+    ).length;
+}
+
+function countSubjectFlashcards(subjectId) {
+    return flashcards.filter(card => card.subjectId === subjectId).length;
+}
+
+function countChapterFlashcards(subjectId, chapterId) {
+    return flashcards.filter(card =>
+        card.subjectId === subjectId && card.chapterId === chapterId
+    ).length;
+}
+
+function countSubjectQuizzes(subjectId) {
+    return quizzes.filter(quiz => quiz.subjectId === subjectId).length;
+}
+
+function countChapterQuizzes(subjectId, chapterId) {
+    return quizzes.filter(quiz =>
+        quiz.subjectId === subjectId && quiz.chapterId === chapterId
+    ).length;
+}
+
+function loadStudyResources() {
+    const raw = localStorage.getItem("flora-resources");
+    if (!raw) return [];
+
+    try {
+        const stored = JSON.parse(raw);
+        return Array.isArray(stored) ? stored : [];
+    } catch (error) {
+        console.error("Could not load resources for counts:", error);
+        return [];
+    }
+}
+
+function countSubjectResources(subjectId) {
+    return studyResources.filter(res => res.subjectId === subjectId).length;
+}
+
+function countChapterResources(subjectId, chapterId) {
+    return studyResources.filter(res =>
+        res.subjectId === subjectId && res.chapterId === chapterId
+    ).length;
 }
 
 function normalizeSubject(subject) {
@@ -203,7 +308,21 @@ function renderSubject() {
         : "No chapters have been added yet.";
 
     const subjectNotesUrl = `notes.html?subject=${encodeURIComponent(currentSubject.id)}`;
+    const subjectFlashcardsUrl = `flashcards.html?subject=${encodeURIComponent(currentSubject.id)}`;
+    const subjectQuizzesUrl = `quiz.html?subject=${encodeURIComponent(currentSubject.id)}`;
     subjectNotesLink.href = subjectNotesUrl;
+    const totalNotes = countSubjectNotes(currentSubject.id);
+    subjectNoteCount.textContent = totalNotes ? `(${totalNotes})` : "";
+    subjectFlashcardsLink.href = subjectFlashcardsUrl;
+    const totalFlashcards = countSubjectFlashcards(currentSubject.id);
+    subjectFlashcardCount.textContent = totalFlashcards ? `(${totalFlashcards})` : "";
+    subjectQuizzesLink.href = subjectQuizzesUrl;
+    const totalQuizzes = countSubjectQuizzes(currentSubject.id);
+    subjectQuizCount.textContent = totalQuizzes ? `(${totalQuizzes})` : "";
+    const subjectResourcesUrl = `resources.html?subject=${encodeURIComponent(currentSubject.id)}`;
+    subjectResourcesLink.href = subjectResourcesUrl;
+    const totalResources = countSubjectResources(currentSubject.id);
+    subjectResourceCount.textContent = totalResources ? `(${totalResources})` : "";
     currentChapterNotesLink.href = currentChapter
         ? `${subjectNotesUrl}&chapter=${encodeURIComponent(currentChapter.id)}`
         : subjectNotesUrl;
@@ -228,6 +347,10 @@ function renderChapters() {
     }
 
     currentSubject.chapters.forEach((chapter, index) => {
+        const noteCount = countChapterNotes(currentSubject.id, chapter);
+        const flashcardCount = countChapterFlashcards(currentSubject.id, chapter.id);
+        const quizCount = countChapterQuizzes(currentSubject.id, chapter.id);
+        const resourceCount = countChapterResources(currentSubject.id, chapter.id);
         const row = document.createElement("article");
         row.className = `chapter-row ${chapter.completed ? "is-completed" : ""}`;
 
@@ -269,9 +392,24 @@ function renderChapters() {
         const notesLink = document.createElement("a");
         notesLink.className = "chapter-action-btn chapter-notes-link";
         notesLink.href = `notes.html?subject=${encodeURIComponent(currentSubject.id)}&chapter=${encodeURIComponent(chapter.id)}`;
-        notesLink.textContent = "Notes";
+        notesLink.textContent = `Notes (${noteCount})`;
 
-        actions.append(notesLink, toggleButton, editButton, deleteButton);
+        const flashcardsLink = document.createElement("a");
+        flashcardsLink.className = "chapter-action-btn chapter-notes-link";
+        flashcardsLink.href = `flashcards.html?subject=${encodeURIComponent(currentSubject.id)}&chapter=${encodeURIComponent(chapter.id)}`;
+        flashcardsLink.textContent = `Cards (${flashcardCount})`;
+
+        const quizzesLink = document.createElement("a");
+        quizzesLink.className = "chapter-action-btn chapter-notes-link";
+        quizzesLink.href = `quiz.html?subject=${encodeURIComponent(currentSubject.id)}&chapter=${encodeURIComponent(chapter.id)}`;
+        quizzesLink.textContent = `Quizzes (${quizCount})`;
+
+        const resourcesLink = document.createElement("a");
+        resourcesLink.className = "chapter-action-btn chapter-notes-link";
+        resourcesLink.href = `resources.html?subject=${encodeURIComponent(currentSubject.id)}&chapter=${encodeURIComponent(chapter.id)}`;
+        resourcesLink.textContent = `Resources (${resourceCount})`;
+
+        actions.append(notesLink, flashcardsLink, quizzesLink, resourcesLink, toggleButton, editButton, deleteButton);
         row.appendChild(left);
         row.appendChild(actions);
         chaptersList.appendChild(row);
