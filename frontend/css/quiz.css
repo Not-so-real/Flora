@@ -109,25 +109,6 @@ a {
     background: var(--color-surface);
 }
 
-.quiz-back {
-    display: inline-block;
-    margin-bottom: 18px;
-    color: var(--color-text-secondary);
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: var(--transition-fast);
-}
-
-.quiz-back::before {
-    content: "<-";
-    margin-right: 7px;
-}
-
-.quiz-back:hover {
-    color: var(--color-primary);
-    transform: translateX(-2px);
-}
-
 .quiz-sidebar-header h1 {
     margin: 0 0 4px;
     font-size: 1.5rem;

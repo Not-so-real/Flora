@@ -151,10 +151,6 @@
         padding-bottom: 42px;
     }
 
-    .back-link {
-        margin-bottom: 42px;
-    }
-
     .subject-section {
         padding: 64px 0;
     }
@@ -273,13 +269,15 @@
     }
 
     .note-folder-select,
-    .note-chapter-input {
+    .note-subject-select,
+    .note-chapter-select {
         align-items: stretch;
         flex-direction: column;
     }
 
     #note-folder-select,
-    #note-chapter-input {
+    #note-subject-select,
+    #note-chapter-select {
         width: 100%;
     }
 

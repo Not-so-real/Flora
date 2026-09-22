@@ -112,36 +112,6 @@ html, body {
     flex-direction: column;
 }
 
-.back-to-dashboard {
-    width: fit-content;
-    margin-bottom: 18px;
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 600;
-    position: relative;
-    z-index: 2;
-    transition:
-        color var(--transition-fast),
-        transform var(--transition-fast);
-}
-
-.back-to-dashboard::before {
-    content: "←";
-    margin-right: 7px;
-}
-
-.back-to-dashboard:hover {
-    color: var(--color-primary);
-    transform: translateX(-2px);
-}
-
-.back-to-dashboard:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 4px;
-    border-radius: 3px;
-}
-
 .sidebar-header {
     margin-bottom: 12px;
 }
