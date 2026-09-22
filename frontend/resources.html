@@ -150,6 +150,31 @@
                 </div>
             </div>
 
+            <!-- AI Tools -->
+            <div class="res-ai-tools is-hidden" id="res-ai-tools">
+                <div class="ai-buttons">
+                    <button class="tool-btn" id="res-ai-flashcards-btn" type="button">
+                        🧠 Generate Flashcards
+                    </button>
+                    <button class="tool-btn" id="res-ai-quiz-btn" type="button">
+                        ❓ Generate Quiz
+                    </button>
+                </div>
+
+                <div id="ai-output" class="ai-output is-hidden">
+                    <div class="ai-output-header">
+                        <span id="ai-output-label">AI Response</span>
+                        <button type="button" id="ai-output-close" class="ai-output-close">&times;</button>
+                    </div>
+                    <div id="ai-output-content" class="ai-output-content"></div>
+                    <div id="ai-output-actions" class="ai-output-actions is-hidden">
+                        <button type="button" class="primary-btn" id="ai-save-result-btn">Save to Flora</button>
+                    </div>
+                </div>
+
+                <p id="ai-status" class="res-ai-status"></p>
+            </div>
+
             <div class="res-editor-empty" id="res-editor-empty">
                 <span>R</span>
                 <h2>No resource selected</h2>
@@ -159,6 +184,14 @@
         </section>
     </main>
 
-    <script src="js/resources.js"></script>
+    <!-- PDF.js for reading PDF text locally -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Tell PDF.js where the worker script is
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <script src="js/ai.js" defer></script>
+    <script src="js/resources.js" defer></script>
 </body>
 </html>

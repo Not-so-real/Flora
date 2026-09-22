@@ -57,6 +57,16 @@
                 <input type="text" id="new-folder-input" class="new-folder-input" placeholder="+ New folder">
             </div>
 
+            <div class="notes-filter-section">
+                <div class="notes-filter-header">
+                    <h3>View Notes</h3>
+                    <button type="button" id="clear-note-filters" class="clear-note-filters">Clear</button>
+                </div>
+                <select id="note-subject-filter" aria-label="Filter notes by subject"></select>
+                <select id="note-chapter-filter" aria-label="Filter notes by chapter"></select>
+                <p class="notes-filter-context" id="notes-filter-context"></p>
+            </div>
+
             <div class="search-box">
                 <input type="text" id="note-search" placeholder="Search notes...">
             </div>
@@ -75,8 +85,13 @@
 
                 <div class="editor-title-block">
 
-                    <h2 id="note-title">
-                        📝 No Note Selected
+                    <h2
+                        id="note-title"
+                        contenteditable="true"
+                        role="textbox"
+                        aria-label="Note title"
+                        aria-multiline="false"
+                        data-placeholder="Untitled Note">
                     </h2>
 
                     <span id="save-status" class="save-status hidden"></span>
@@ -149,30 +164,76 @@
 
                 <div class="ai-buttons">
 
-                    <button class="tool-btn">
+                    <button class="tool-btn" id="ai-summarize-btn" type="button">
                         ✨ Summarize
                     </button>
 
-                    <button class="tool-btn">
+                    <button class="tool-btn" id="ai-flashcards-btn" type="button">
                         🧠 Flashcards
                     </button>
 
-                    <button class="tool-btn">
+                    <button class="tool-btn" id="ai-quiz-btn" type="button">
                         ❓ Quiz
                     </button>
 
-                    <button class="tool-btn">
+                    <button class="tool-btn" id="ai-explain-btn" type="button">
                         💡 Explain
+                    </button>
+
+                    <button class="tool-btn ai-settings-btn" id="ai-settings-btn" type="button">
+                        ⚙️ AI Settings
                     </button>
 
                 </div>
 
+                <div id="ai-output" class="ai-output is-hidden">
+                    <div class="ai-output-header">
+                        <span id="ai-output-label">AI Response</span>
+                        <button type="button" id="ai-output-close" class="ai-output-close">&times;</button>
+                    </div>
+                    <div id="ai-output-content" class="ai-output-content"></div>
+                    <div id="ai-output-actions" class="ai-output-actions is-hidden">
+                        <button type="button" class="primary-btn" id="ai-save-result-btn">Save to Flora</button>
+                    </div>
+                </div>
+
+                <p id="ai-status" class="ai-status"></p>
+
             </div>
+
+            <!-- AI Settings Dialog -->
+            <dialog class="ai-settings-dialog" id="ai-settings-dialog">
+                <form method="dialog" id="ai-settings-form">
+                    <div class="ai-settings-header">
+                        <div>
+                            <p class="ai-settings-eyebrow">AI Configuration</p>
+                            <h2>AI Settings</h2>
+                        </div>
+                        <button type="button" class="ai-settings-close-btn" id="ai-settings-close">&times;</button>
+                    </div>
+
+                    <label for="ai-api-key">OpenRouter API Key</label>
+                    <input type="password" id="ai-api-key" placeholder="Paste your OpenRouter key (sk-or-v1-...)">
+                    <p class="ai-key-help">Get a free key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>. Sign in with Google or GitHub. Your key is stored only in your browser.</p>
+
+                    <label for="ai-model-select">AI Model</label>
+                    <select id="ai-model-select">
+                        <option value="">-- Save key first, then load models --</option>
+                    </select>
+                    <button type="button" class="secondary-ai-btn" id="ai-load-models-btn" style="width:100%;margin:8px 0 16px;">Load Free Models</button>
+
+                    <div class="ai-settings-actions">
+                        <button type="button" class="secondary-ai-btn" id="ai-settings-cancel">Cancel</button>
+                        <button type="submit" class="primary-btn">Save Settings</button>
+                    </div>
+                </form>
+            </dialog>
 
         </section>
 
     </main>
-    <script src="js/notes.js"></script>
+    <script src="js/ai.js" defer></script>
+    <script src="js/notes.js" defer></script>
 </body>
 
 </html>

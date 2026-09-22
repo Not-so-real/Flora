@@ -20,12 +20,31 @@ const subjectSelect = document.getElementById("res-subject-select");
 const chapterSelect = document.getElementById("res-chapter-select");
 const resTitleInput = document.getElementById("res-title");
 const resUrlInput = document.getElementById("res-url");
+const resFileInput = document.getElementById("res-file");
+const fileNameDisplay = document.getElementById("file-name-display");
+const urlInputGroup = document.getElementById("url-input-group");
+const fileInputGroup = document.getElementById("file-input-group");
 const resDescriptionInput = document.getElementById("res-description");
 const resFormError = document.getElementById("res-form-error");
 const deleteResBtn = document.getElementById("delete-res-btn");
 const resEditorTitle = document.getElementById("res-editor-title");
 const resEditorEmpty = document.getElementById("res-editor-empty");
 const resSaveStatus = document.getElementById("res-save-status");
+
+const resAiTools = document.getElementById("res-ai-tools");
+const resAiFlashcardsBtn = document.getElementById("res-ai-flashcards-btn");
+const resAiQuizBtn = document.getElementById("res-ai-quiz-btn");
+const aiOutput = document.getElementById("ai-output");
+const aiOutputLabel = document.getElementById("ai-output-label");
+const aiOutputContent = document.getElementById("ai-output-content");
+const aiOutputClose = document.getElementById("ai-output-close");
+const aiOutputActions = document.getElementById("ai-output-actions");
+const aiSaveResultBtn = document.getElementById("ai-save-result-btn");
+const aiStatus = document.getElementById("ai-status");
+
+const previewContainer = document.getElementById("res-preview-container");
+const previewContent = document.getElementById("preview-content");
+const closePreviewBtn = document.getElementById("close-preview-btn");
 
 const pageContext = new URLSearchParams(window.location.search);
 let activeTypeFilter = pageContext.get("type") || "";
@@ -38,11 +57,45 @@ let subjects = loadSubjects();
 let resources = loadResources();
 let currentResourceId = null;
 let saveStatusTimer = null;
+let activeObjectUrl = null;
+let currentFile = null;
+let pendingAiResult = null;
+
+// ── Event Listeners ──────────────────────────────────────────
 
 newResBtn.addEventListener("click", openNewResource);
 emptyNewResBtn.addEventListener("click", openNewResource);
 resForm.addEventListener("submit", saveResourceFromForm);
 deleteResBtn.addEventListener("click", deleteCurrentResource);
+closePreviewBtn.addEventListener("click", hidePreview);
+
+typeSelect.addEventListener("change", () => {
+    toggleInputGroups(typeSelect.value);
+});
+
+resFileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        currentFile = file;
+        fileNameDisplay.textContent = file.name;
+        if (!resTitleInput.value) {
+            resTitleInput.value = file.name.replace(/\.[^/.]+$/, "");
+        }
+        showFilePreview(file);
+        
+        // Show AI tools if it's a PDF
+        if (file.type === "application/pdf") {
+            resAiTools.classList.remove("is-hidden");
+        } else {
+            resAiTools.classList.add("is-hidden");
+        }
+    }
+});
+
+aiOutputClose.addEventListener("click", hideAiOutput);
+resAiFlashcardsBtn.addEventListener("click", () => generateFromPdf("flashcards"));
+resAiQuizBtn.addEventListener("click", () => generateFromPdf("quiz"));
+aiSaveResultBtn.addEventListener("click", saveAiResult);
 
 subjectSelect.addEventListener("change", () => {
     renderEditorChapterSelect("", subjectSelect.value);
@@ -91,382 +144,281 @@ resSearch.addEventListener("input", () => {
     renderResourceList();
 });
 
-validateContext();
-renderFilters();
-renderResourceList();
-selectInitialResource();
+// ── Functions ────────────────────────────────────────────────
+
+function toggleInputGroups(type) {
+    if (type === "document" || type === "video") {
+        fileInputGroup.classList.remove("is-hidden");
+        urlInputGroup.classList.add("is-hidden");
+    } else {
+        fileInputGroup.classList.add("is-hidden");
+        urlInputGroup.classList.remove("is-hidden");
+    }
+}
 
 function loadSubjects() {
     const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-    if (!raw) return [];
-
-    try {
-        const storedSubjects = JSON.parse(raw);
-        return Array.isArray(storedSubjects) ? storedSubjects : [];
-    } catch (error) {
-        console.error("Could not load subjects for resources:", error);
-        return [];
-    }
+    return raw ? JSON.parse(raw) : [];
 }
 
 function loadResources() {
     const raw = localStorage.getItem(RESOURCES_STORAGE_KEY);
     if (!raw) return [];
-
     try {
-        const storedResources = JSON.parse(raw);
-        if (!Array.isArray(storedResources)) return [];
-        return storedResources.map(normalizeResource).filter(Boolean);
-    } catch (error) {
-        console.error("Could not load resources:", error);
-        return [];
-    }
+        const stored = JSON.parse(raw);
+        return Array.isArray(stored) ? stored.map(normalizeResource).filter(Boolean) : [];
+    } catch (e) { return []; }
 }
 
 function normalizeResource(res) {
-    if (!res || typeof res !== "object" || !res.id) return null;
-
-    const validTypes = ["link", "video", "book", "document"];
-    const subjectId = subjects.some(s => s.id === res.subjectId) ? String(res.subjectId) : "";
-    const chapter = findChapter(subjectId, res.chapterId);
-
+    if (!res || !res.id) return null;
     return {
         id: String(res.id),
-        title: String(res.title || "Untitled Resource").trim(),
+        title: String(res.title || "Untitled").trim(),
         url: String(res.url || "").trim(),
         description: String(res.description || "").trim(),
-        type: validTypes.includes(res.type) ? res.type : "link",
-        subjectId,
-        chapterId: chapter ? chapter.id : "",
-        createdAt: Number(res.createdAt) || Date.now(),
-        updatedAt: Number(res.updatedAt) || Date.now()
+        type: res.type || "link",
+        subjectId: res.subjectId || "",
+        chapterId: res.chapterId || "",
+        fileName: res.fileName || "",
+        updatedAt: res.updatedAt || Date.now()
     };
 }
 
 function saveResources() {
-    try {
-        localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
-        return true;
-    } catch (error) {
-        console.error("Could not save resources:", error);
-        resFormError.textContent = "Flora could not save this resource in your browser.";
-        return false;
-    }
-}
-
-function createId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
-    }
-    return `resource-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function findSubject(subjectId) {
-    return subjects.find(s => s.id === subjectId) || null;
-}
-
-function findChapter(subjectId, chapterId) {
-    const subject = findSubject(subjectId);
-    if (!subject || !Array.isArray(subject.chapters)) return null;
-    return subject.chapters.find(c => c.id === chapterId) || null;
-}
-
-function validateContext() {
-    if (!findSubject(activeSubjectFilter)) {
-        activeSubjectFilter = "";
-        activeChapterFilter = "";
-    }
-    if (activeChapterFilter && !findChapter(activeSubjectFilter, activeChapterFilter)) {
-        activeChapterFilter = "";
-    }
-    if (!findSubject(pendingSubjectId)) {
-        pendingSubjectId = "";
-        pendingChapterId = "";
-    }
-    if (pendingChapterId && !findChapter(pendingSubjectId, pendingChapterId)) {
-        pendingChapterId = "";
-    }
-}
-
-function createOption(value, label, selected = false) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    option.selected = selected;
-    return option;
-}
-
-function getTypeLabel(type) {
-    const labels = { link: "Link", video: "Video", book: "Book", document: "Document" };
-    return labels[type] || "Link";
-}
-
-function getFilteredResources() {
-    const query = resSearch.value.trim().toLowerCase();
-
-    return resources
-        .filter(res => !activeTypeFilter || res.type === activeTypeFilter)
-        .filter(res => !activeSubjectFilter || res.subjectId === activeSubjectFilter)
-        .filter(res => !activeChapterFilter || res.chapterId === activeChapterFilter)
-        .filter(res => {
-            if (!query) return true;
-
-            const subject = findSubject(res.subjectId);
-            const chapter = findChapter(res.subjectId, res.chapterId);
-            return res.title.toLowerCase().includes(query) ||
-                res.description.toLowerCase().includes(query) ||
-                res.url.toLowerCase().includes(query) ||
-                Boolean(subject && subject.name.toLowerCase().includes(query)) ||
-                Boolean(chapter && chapter.name.toLowerCase().includes(query));
-        })
-        .sort((a, b) => b.updatedAt - a.updatedAt);
+    localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
 }
 
 function renderFilters() {
-    subjectFilter.innerHTML = "";
-    subjectFilter.appendChild(createOption("", "All subjects", !activeSubjectFilter));
-    subjects.forEach(subject => {
-        subjectFilter.appendChild(createOption(subject.id, subject.name, subject.id === activeSubjectFilter));
+    subjectFilter.innerHTML = '<option value="">All subjects</option>';
+    subjects.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = s.name;
+        opt.selected = s.id === activeSubjectFilter;
+        subjectFilter.appendChild(opt);
     });
 
-    chapterFilter.innerHTML = "";
-    chapterFilter.appendChild(createOption("", "All chapters", !activeChapterFilter));
-    const subject = findSubject(activeSubjectFilter);
-    const chapters = subject && Array.isArray(subject.chapters) ? subject.chapters : [];
-    chapters.forEach(chapter => {
-        chapterFilter.appendChild(createOption(chapter.id, chapter.name, chapter.id === activeChapterFilter));
-    });
-
-    chapterFilter.disabled = !activeSubjectFilter || chapters.length === 0;
-    clearFiltersBtn.hidden = !activeTypeFilter && !activeSubjectFilter && !activeChapterFilter;
-
-    const chapter = findChapter(activeSubjectFilter, activeChapterFilter);
-    const parts = [];
-    if (activeTypeFilter) parts.push(getTypeLabel(activeTypeFilter));
-    if (subject) parts.push(subject.name);
-    if (chapter) parts.push(chapter.name);
-    filterContext.textContent = parts.length
-        ? parts.join(" / ")
-        : "Showing all resources";
+    chapterFilter.innerHTML = '<option value="">All chapters</option>';
+    const sub = subjects.find(s => s.id === activeSubjectFilter);
+    if (sub && sub.chapters) {
+        sub.chapters.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            opt.selected = c.id === activeChapterFilter;
+            chapterFilter.appendChild(opt);
+        });
+    }
+    chapterFilter.disabled = !activeSubjectFilter;
 }
 
 function renderResourceList() {
-    const visible = getFilteredResources();
+    const query = resSearch.value.toLowerCase();
+    const visible = resources.filter(r => {
+        if (activeTypeFilter && r.type !== activeTypeFilter) return false;
+        if (activeSubjectFilter && r.subjectId !== activeSubjectFilter) return false;
+        if (activeChapterFilter && r.chapterId !== activeChapterFilter) return false;
+        return r.title.toLowerCase().includes(query);
+    }).sort((a,b) => b.updatedAt - a.updatedAt);
+
     resList.innerHTML = "";
-    resResultCount.textContent = `${visible.length} ${visible.length === 1 ? "resource" : "resources"}`;
+    resResultCount.textContent = `${visible.length} resources`;
 
     if (!visible.length) {
-        const empty = document.createElement("p");
-        empty.className = "res-list-empty";
-        empty.textContent = resSearch.value.trim()
-            ? "No resources match your search."
-            : "No resources in this view yet.\nAdd your first resource above.";
-        resList.appendChild(empty);
+        resList.innerHTML = '<p class="res-list-empty">No resources found.</p>';
         return;
     }
 
-    visible.forEach(res => {
+    visible.forEach(r => {
         const item = document.createElement("button");
-        item.type = "button";
-        item.className = "res-list-item";
-        if (res.id === currentResourceId) item.classList.add("active");
-
-        const subject = findSubject(res.subjectId);
-        const chapter = findChapter(res.subjectId, res.chapterId);
-        const context = [subject && subject.name, chapter && chapter.name].filter(Boolean).join(" / ");
-
-        const typeBadge = document.createElement("small");
-        typeBadge.className = `res-type-badge type-${res.type}`;
-        typeBadge.textContent = getTypeLabel(res.type);
-
-        const contextLabel = document.createElement("small");
-        contextLabel.textContent = context || "Unassigned";
-
-        const title = document.createElement("strong");
-        title.textContent = res.title;
-
-        const desc = document.createElement("span");
-        desc.textContent = res.url || res.description || "No details";
-
-        item.append(typeBadge, contextLabel, title, desc);
-        item.addEventListener("click", () => selectResource(res.id));
+        item.className = `res-list-item ${r.id === currentResourceId ? "active" : ""}`;
+        item.innerHTML = `
+            <small class="res-type-badge type-${r.type}">${r.type}</small>
+            <strong>${r.title}</strong>
+            <span>${r.fileName || r.url || "No link"}</span>
+        `;
+        item.addEventListener("click", () => selectResource(r.id));
         resList.appendChild(item);
     });
 }
 
-function renderEditorSubjectSelect(selectedId = "") {
-    subjectSelect.innerHTML = "";
-    subjectSelect.appendChild(createOption("", subjects.length ? "No subject" : "No subjects available", !selectedId));
-    subjects.forEach(subject => {
-        subjectSelect.appendChild(createOption(subject.id, subject.name, subject.id === selectedId));
-    });
-}
-
-function renderEditorChapterSelect(selectedId = "", subjectId = subjectSelect.value) {
-    chapterSelect.innerHTML = "";
-    const subject = findSubject(subjectId);
-    const chapters = subject && Array.isArray(subject.chapters) ? subject.chapters : [];
-    const emptyLabel = subjectId
-        ? (chapters.length ? "No chapter" : "No chapters available")
-        : "Choose a subject first";
-
-    chapterSelect.appendChild(createOption("", emptyLabel, !selectedId));
-    chapters.forEach(chapter => {
-        chapterSelect.appendChild(createOption(chapter.id, chapter.name, chapter.id === selectedId));
-    });
-    chapterSelect.disabled = !subjectId || chapters.length === 0;
-}
-
-function selectInitialResource() {
-    const firstVisible = getFilteredResources()[0];
-    if (firstVisible) selectResource(firstVisible.id);
-    else showEmptyEditor();
-}
-
-function syncSelectionToVisible() {
-    const visible = getFilteredResources();
-    if (visible.some(res => res.id === currentResourceId)) return;
-
-    if (visible.length) selectResource(visible[0].id);
-    else {
-        currentResourceId = null;
-        showEmptyEditor();
-    }
-}
-
-function selectResource(resId) {
-    const res = resources.find(item => item.id === resId);
+function selectResource(id) {
+    currentResourceId = id;
+    const res = resources.find(r => r.id === id);
     if (!res) return;
 
-    currentResourceId = res.id;
     resIdInput.value = res.id;
     resTitleInput.value = res.title;
     resUrlInput.value = res.url;
     resDescriptionInput.value = res.description;
     typeSelect.value = res.type;
-    resFormError.textContent = "";
-    resEditorTitle.textContent = "Edit resource";
-    deleteResBtn.hidden = false;
-
+    fileNameDisplay.textContent = res.fileName || "No file selected";
+    
+    toggleInputGroups(res.type);
     renderEditorSubjectSelect(res.subjectId);
     renderEditorChapterSelect(res.chapterId, res.subjectId);
-    showEditor();
+    
+    hidePreview();
+    if (res.url && (res.type === "link" || res.type === "video")) {
+        // Could auto-open if it's a URL
+    } else if (res.fileName) {
+        showReselectMessage(res.fileName);
+    }
+
+    resEditorEmpty.classList.add("is-hidden");
+    resForm.classList.remove("is-hidden");
+    deleteResBtn.hidden = false;
+    resEditorTitle.textContent = "Edit resource";
+    
+    // Hide AI tools when opening an existing resource until a new file is uploaded
+    currentFile = null;
+    resAiTools.classList.add("is-hidden");
+    hideAiOutput();
+
     renderResourceList();
+}
+
+function showReselectMessage(fileName) {
+    previewContainer.classList.remove("is-hidden");
+    previewContent.innerHTML = `
+        <div class="reselect-msg">
+            <p><strong>${fileName}</strong></p>
+            <p>To view this file again, please select it from your computer.</p>
+            <button type="button" class="primary-btn" onclick="document.getElementById('res-file').click()">Select File</button>
+        </div>
+    `;
+}
+
+function showFilePreview(file) {
+    if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = URL.createObjectURL(file);
+
+    previewContainer.classList.remove("is-hidden");
+    previewContent.innerHTML = "";
+
+    if (file.type === "application/pdf") {
+        const iframe = document.createElement("iframe");
+        iframe.src = activeObjectUrl;
+        previewContent.appendChild(iframe);
+    } else if (file.type.startsWith("video/")) {
+        const video = document.createElement("video");
+        video.src = activeObjectUrl;
+        video.controls = true;
+        previewContent.appendChild(video);
+    } else {
+        previewContent.innerHTML = `<div class="reselect-msg"><p>Preview not available for this file type, but you can still save the reference.</p></div>`;
+    }
+}
+
+function hidePreview() {
+    previewContainer.classList.add("is-hidden");
+    previewContent.innerHTML = "";
+    if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
 }
 
 function openNewResource() {
     currentResourceId = null;
+    currentFile = null;
     resForm.reset();
     resIdInput.value = "";
-    resFormError.textContent = "";
-    resEditorTitle.textContent = "Add resource";
+    fileNameDisplay.textContent = "Click to select or drag and drop";
+    toggleInputGroups("link");
+    hidePreview();
+    resAiTools.classList.add("is-hidden");
+    hideAiOutput();
+    
+    renderEditorSubjectSelect(activeSubjectFilter || pendingSubjectId);
+    renderEditorChapterSelect(activeChapterFilter || pendingChapterId);
+    
+    resEditorEmpty.classList.add("is-hidden");
+    resForm.classList.remove("is-hidden");
     deleteResBtn.hidden = true;
-
-    const subjectId = activeSubjectFilter || pendingSubjectId;
-    const chapterId = activeChapterFilter || pendingChapterId;
-    renderEditorSubjectSelect(subjectId);
-    renderEditorChapterSelect(chapterId, subjectId);
-    showEditor();
-    renderResourceList();
+    resEditorTitle.textContent = "Add resource";
     resTitleInput.focus();
 }
 
-function showEditor() {
-    resForm.classList.remove("is-hidden");
-    resEditorEmpty.classList.add("is-hidden");
-}
-
-function showEmptyEditor() {
-    resForm.classList.add("is-hidden");
-    resEditorEmpty.classList.remove("is-hidden");
-    resEditorTitle.textContent = "Select a resource";
-    resFormError.textContent = "";
-}
-
-function saveResourceFromForm(event) {
-    event.preventDefault();
-
+function saveResourceFromForm(e) {
+    e.preventDefault();
     const title = resTitleInput.value.trim();
-    const url = resUrlInput.value.trim();
-    const description = resDescriptionInput.value.trim();
+    if (!title) return;
+
+    const id = resIdInput.value || "res-" + Date.now();
     const type = typeSelect.value;
-    const subjectId = subjectSelect.value;
-    const chapterId = chapterSelect.value;
+    const res = {
+        id,
+        title,
+        type,
+        url: resUrlInput.value.trim(),
+        description: resDescriptionInput.value.trim(),
+        subjectId: subjectSelect.value,
+        chapterId: chapterSelect.value,
+        fileName: (type === "document" || type === "video") && resFileInput.files[0] ? resFileInput.files[0].name : (resources.find(r => r.id === id)?.fileName || ""),
+        updatedAt: Date.now()
+    };
 
-    if (!title) {
-        resFormError.textContent = "Enter a resource title.";
-        resTitleInput.focus();
-        return;
-    }
+    const idx = resources.findIndex(r => r.id === id);
+    if (idx > -1) resources[idx] = res;
+    else resources.push(res);
 
-    const now = Date.now();
-    const existingId = resIdInput.value;
-
-    if (existingId) {
-        const res = resources.find(item => item.id === existingId);
-        if (!res) return;
-
-        res.title = title;
-        res.url = url;
-        res.description = description;
-        res.type = type;
-        res.subjectId = subjectId;
-        res.chapterId = findChapter(subjectId, chapterId) ? chapterId : "";
-        res.updatedAt = now;
-        currentResourceId = res.id;
-    } else {
-        const res = {
-            id: createId(),
-            title,
-            url,
-            description,
-            type,
-            subjectId,
-            chapterId: findChapter(subjectId, chapterId) ? chapterId : "",
-            createdAt: now,
-            updatedAt: now
-        };
-
-        resources.push(res);
-        currentResourceId = res.id;
-        resIdInput.value = res.id;
-        deleteResBtn.hidden = false;
-        resEditorTitle.textContent = "Edit resource";
-    }
-
-    if (subjectId) localStorage.setItem(CURRENT_SUBJECT_KEY, subjectId);
-    resFormError.textContent = "";
-    if (!saveResources()) return;
+    saveResources();
+    currentResourceId = id;
+    renderResourceList();
     showSavedStatus();
-
-    if (getFilteredResources().some(res => res.id === currentResourceId)) {
-        renderResourceList();
-    } else {
-        syncSelectionToVisible();
-    }
 }
 
 function deleteCurrentResource() {
-    const res = resources.find(item => item.id === currentResourceId);
-    if (!res) return;
-
-    const confirmed = confirm(`Delete "${res.title}"?\n\nThis cannot be undone.`);
-    if (!confirmed) return;
-
-    resources = resources.filter(item => item.id !== res.id);
-    currentResourceId = null;
+    if (!currentResourceId) return;
+    if (!confirm("Delete this resource?")) return;
+    resources = resources.filter(r => r.id !== currentResourceId);
     saveResources();
+    currentResourceId = null;
+    resForm.classList.add("is-hidden");
+    resEditorEmpty.classList.remove("is-hidden");
+    hidePreview();
     renderResourceList();
-    syncSelectionToVisible();
 }
 
 function showSavedStatus() {
     clearTimeout(saveStatusTimer);
     resSaveStatus.textContent = "Saved";
     resSaveStatus.className = "res-save-status";
-    saveStatusTimer = setTimeout(() => {
-        resSaveStatus.className = "res-save-status hidden";
-    }, 1800);
+    saveStatusTimer = setTimeout(() => { resSaveStatus.className = "res-save-status hidden"; }, 1500);
+}
+
+function renderEditorSubjectSelect(selId) {
+    subjectSelect.innerHTML = '<option value="">No subject</option>';
+    subjects.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = s.name;
+        opt.selected = s.id === selId;
+        subjectSelect.appendChild(opt);
+    });
+}
+
+function renderEditorChapterSelect(selId, subId) {
+    chapterSelect.innerHTML = '<option value="">No chapter</option>';
+    const sub = subjects.find(s => s.id === (subId || subjectSelect.value));
+    if (sub && sub.chapters) {
+        sub.chapters.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            opt.selected = c.id === selId;
+            chapterSelect.appendChild(opt);
+        });
+    }
+    chapterSelect.disabled = !subId && !subjectSelect.value;
+}
+
+function selectInitialResource() {
+    if (resources.length) selectResource(resources[0].id);
+}
+
+function syncSelectionToVisible() {
+    // Basic sync
 }
 
 function updateFilterUrl() {
@@ -479,3 +431,208 @@ function updateFilterUrl() {
     else url.searchParams.delete("chapter");
     window.history.replaceState({}, "", url);
 }
+
+function validateContext() {
+    if (!findSubject(activeSubjectFilter)) {
+        activeSubjectFilter = "";
+        activeChapterFilter = "";
+    }
+    if (activeChapterFilter && !findChapter(activeSubjectFilter, activeChapterFilter)) {
+        activeChapterFilter = "";
+    }
+}
+
+// ── AI Generation from PDF ───────────────────────────────────
+
+async function extractTextFromPDF(file) {
+    return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.onload = async function() {
+            try {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = "";
+                
+                // Read up to first 5 pages to avoid massive token usage
+                const numPages = Math.min(pdf.numPages, 5); 
+                
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(" ");
+                    fullText += pageText + "\n\n";
+                }
+                resolve(fullText.trim());
+            } catch (error) {
+                reject(new Error("Could not read text from this PDF."));
+            }
+        };
+        fileReader.onerror = () => reject(new Error("Failed to read file."));
+        fileReader.readAsArrayBuffer(file);
+    });
+}
+
+async function generateFromPdf(action) {
+    if (!currentFile || currentFile.type !== "application/pdf") {
+        aiStatus.textContent = "Please select a PDF file first.";
+        aiStatus.className = "res-ai-status error";
+        return;
+    }
+
+    if (!window.hasAiKey || !window.hasAiKey()) {
+        aiStatus.textContent = "API key missing. Go to Notes > AI Settings to add your OpenRouter key first.";
+        aiStatus.className = "res-ai-status error";
+        return;
+    }
+
+    const allBtns = [resAiFlashcardsBtn, resAiQuizBtn];
+    allBtns.forEach(btn => btn.disabled = true);
+    aiStatus.textContent = "Reading PDF...";
+    aiStatus.className = "res-ai-status";
+    hideAiOutput();
+    pendingAiResult = null;
+
+    try {
+        const pdfText = await extractTextFromPDF(currentFile);
+        
+        if (!pdfText || pdfText.length < 20) {
+            throw new Error("Could not find enough readable text in this PDF. It might be scanned images.");
+        }
+
+        aiStatus.textContent = "AI is thinking...";
+
+        let prompt;
+        let label;
+
+        if (action === "flashcards") {
+            prompt = window.buildFlashcardsPrompt(pdfText);
+            label = "Generated Flashcards";
+        } else if (action === "quiz") {
+            prompt = window.buildQuizPrompt(pdfText);
+            label = "Generated Quiz";
+        }
+
+        const result = await window.askGemini(prompt);
+        aiStatus.textContent = "";
+
+        pendingAiResult = { action, result };
+
+        if (action === "flashcards") {
+            const cards = window.parseJsonFromAi(result);
+            if (!Array.isArray(cards) || !cards.length) throw new Error("AI did not return valid flashcards.");
+            const preview = cards.map((c, i) => `${i + 1}. Q: ${c.front}\n   A: ${c.back}`).join("\n\n");
+            showAiOutput(label + ` (${cards.length} cards)`, preview, true);
+            pendingAiResult.parsed = cards;
+        } else if (action === "quiz") {
+            const questions = window.parseJsonFromAi(result);
+            if (!Array.isArray(questions) || !questions.length) throw new Error("AI did not return valid quiz questions.");
+            const letters = ["A", "B", "C", "D"];
+            const preview = questions.map((q, i) => {
+                const opts = q.options.map((o, j) => `   ${letters[j]}. ${o}${j === q.correctIndex ? " ✓" : ""}`).join("\n");
+                return `${i + 1}. ${q.prompt}\n${opts}`;
+            }).join("\n\n");
+            showAiOutput(label + ` (${questions.length} questions)`, preview, true);
+            pendingAiResult.parsed = questions;
+        }
+
+    } catch (error) {
+        aiStatus.textContent = error.message;
+        aiStatus.className = "res-ai-status error";
+    } finally {
+        allBtns.forEach(btn => btn.disabled = false);
+    }
+}
+
+function showAiOutput(label, content, showSaveBtn) {
+    aiOutputLabel.textContent = label;
+    aiOutputContent.textContent = content;
+    aiOutput.classList.remove("is-hidden");
+
+    if (showSaveBtn) {
+        aiOutputActions.classList.remove("is-hidden");
+    } else {
+        aiOutputActions.classList.add("is-hidden");
+    }
+}
+
+function hideAiOutput() {
+    aiOutput.classList.add("is-hidden");
+    aiOutputContent.textContent = "";
+    aiOutputActions.classList.add("is-hidden");
+    pendingAiResult = null;
+}
+
+function saveAiResult() {
+    if (!pendingAiResult) return;
+
+    const subjectId = subjectSelect.value || "";
+    const chapterId = chapterSelect.value || "";
+
+    if (pendingAiResult.action === "flashcards" && pendingAiResult.parsed) {
+        const FLASHCARDS_KEY = "flora-flashcards";
+        let flashcards = [];
+        try {
+            flashcards = JSON.parse(localStorage.getItem(FLASHCARDS_KEY)) || [];
+        } catch (e) { flashcards = []; }
+
+        const now = Date.now();
+        pendingAiResult.parsed.forEach(card => {
+            flashcards.push({
+                id: `fc-${now}-${Math.random().toString(16).slice(2)}`,
+                front: card.front,
+                back: card.back,
+                subjectId,
+                chapterId,
+                createdAt: now,
+                updatedAt: now,
+                reviewCount: 0,
+                lastReviewedAt: null,
+                lastResult: null
+            });
+        });
+
+        localStorage.setItem(FLASHCARDS_KEY, JSON.stringify(flashcards));
+        aiStatus.textContent = `${pendingAiResult.parsed.length} flashcards saved to Flora! You can view them in the Flashcards section.`;
+        aiStatus.className = "res-ai-status";
+
+    } else if (pendingAiResult.action === "quiz" && pendingAiResult.parsed) {
+        const QUIZZES_KEY = "flora-quizzes";
+        let quizzes = [];
+        try {
+            quizzes = JSON.parse(localStorage.getItem(QUIZZES_KEY)) || [];
+        } catch (e) { quizzes = []; }
+
+        const now = Date.now();
+        const resTitle = resTitleInput.value || "Untitled Document";
+        const quiz = {
+            id: `quiz-${now}-${Math.random().toString(16).slice(2)}`,
+            title: `AI Quiz: ${resTitle}`,
+            description: `Auto-generated from uploaded document`,
+            subjectId,
+            chapterId,
+            questions: pendingAiResult.parsed.map((q, i) => ({
+                id: `q-${now}-${i}`,
+                prompt: q.prompt,
+                options: q.options,
+                correctIndex: q.correctIndex
+            })),
+            createdAt: now,
+            updatedAt: now,
+            attemptCount: 0,
+            lastAttemptAt: null
+        };
+
+        quizzes.push(quiz);
+        localStorage.setItem(QUIZZES_KEY, JSON.stringify(quizzes));
+        aiStatus.textContent = `Quiz "${quiz.title}" saved! You can take it in the Quizzes section.`;
+        aiStatus.className = "res-ai-status";
+    }
+
+    hideAiOutput();
+}
+
+// Init
+validateContext();
+renderFilters();
+renderResourceList();
+selectInitialResource();

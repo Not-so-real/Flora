@@ -1025,3 +1025,299 @@ noteEditor.addEventListener("input", () => {
     // Show the save feedback pill
     showSaveStatus();
 });
+
+// ============================================================
+//  AI INTEGRATION
+// ============================================================
+const aiSummarizeBtn = document.getElementById("ai-summarize-btn");
+const aiFlashcardsBtn = document.getElementById("ai-flashcards-btn");
+const aiQuizBtn = document.getElementById("ai-quiz-btn");
+const aiExplainBtn = document.getElementById("ai-explain-btn");
+const aiSettingsBtn = document.getElementById("ai-settings-btn");
+const aiSettingsDialog = document.getElementById("ai-settings-dialog");
+const aiSettingsForm = document.getElementById("ai-settings-form");
+const aiSettingsClose = document.getElementById("ai-settings-close");
+const aiSettingsCancel = document.getElementById("ai-settings-cancel");
+const aiApiKeyInput = document.getElementById("ai-api-key");
+const aiModelSelect = document.getElementById("ai-model-select");
+const aiLoadModelsBtn = document.getElementById("ai-load-models-btn");
+const aiOutput = document.getElementById("ai-output");
+const aiOutputLabel = document.getElementById("ai-output-label");
+const aiOutputContent = document.getElementById("ai-output-content");
+const aiOutputClose = document.getElementById("ai-output-close");
+const aiOutputActions = document.getElementById("ai-output-actions");
+const aiSaveResultBtn = document.getElementById("ai-save-result-btn");
+const aiStatus = document.getElementById("ai-status");
+
+let pendingAiResult = null;
+
+aiSettingsBtn.addEventListener("click", () => {
+    aiApiKeyInput.value = getAiKey();
+    const savedModel = getAiModel();
+    if (savedModel) {
+        const exists = Array.from(aiModelSelect.options).some(o => o.value === savedModel);
+        if (!exists) {
+            const opt = document.createElement("option");
+            opt.value = savedModel;
+            opt.textContent = savedModel;
+            opt.selected = true;
+            aiModelSelect.appendChild(opt);
+        } else {
+            aiModelSelect.value = savedModel;
+        }
+    }
+    aiSettingsDialog.showModal();
+});
+
+aiLoadModelsBtn.addEventListener("click", async () => {
+    const key = aiApiKeyInput.value.trim() || getAiKey();
+    if (!key) {
+        aiStatus.textContent = "Paste your API key first, then click Load Free Models.";
+        aiStatus.className = "ai-status error";
+        return;
+    }
+
+    aiLoadModelsBtn.textContent = "Loading models...";
+    aiLoadModelsBtn.disabled = true;
+
+    try {
+        const freeModels = await fetchFreeModels(key);
+
+        aiModelSelect.innerHTML = "";
+
+        if (!freeModels.length) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = "No free models found";
+            aiModelSelect.appendChild(opt);
+        } else {
+            const currentModel = getAiModel();
+            freeModels.forEach(model => {
+                const opt = document.createElement("option");
+                opt.value = model.id;
+                opt.textContent = model.name || model.id;
+                if (model.id === currentModel) opt.selected = true;
+                aiModelSelect.appendChild(opt);
+            });
+
+            if (!getAiModel() && freeModels.length) {
+                aiModelSelect.value = freeModels[0].id;
+            }
+        }
+
+        aiLoadModelsBtn.textContent = `${freeModels.length} free models loaded`;
+    } catch (error) {
+        aiLoadModelsBtn.textContent = "Load Free Models";
+        aiStatus.textContent = error.message;
+        aiStatus.className = "ai-status error";
+    } finally {
+        aiLoadModelsBtn.disabled = false;
+    }
+});
+
+aiSettingsClose.addEventListener("click", () => aiSettingsDialog.close());
+aiSettingsCancel.addEventListener("click", () => aiSettingsDialog.close());
+aiSettingsDialog.addEventListener("click", e => {
+    if (e.target === aiSettingsDialog) aiSettingsDialog.close();
+});
+
+aiSettingsForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const key = aiApiKeyInput.value.trim();
+    const model = aiModelSelect.value;
+
+    if (!key) {
+        aiStatus.textContent = "Please enter your OpenRouter API key.";
+        aiStatus.className = "ai-status error";
+        aiSettingsDialog.close();
+        return;
+    }
+
+    setAiKey(key);
+    if (model) setAiModel(model);
+
+    aiSettingsDialog.close();
+    aiStatus.textContent = model
+        ? `Settings saved. Model: ${model}`
+        : "API key saved. Open Settings and Load Free Models to pick a model.";
+    aiStatus.className = "ai-status";
+});
+
+aiOutputClose.addEventListener("click", hideAiOutput);
+
+aiSummarizeBtn.addEventListener("click", () => runAi("summarize"));
+aiFlashcardsBtn.addEventListener("click", () => runAi("flashcards"));
+aiQuizBtn.addEventListener("click", () => runAi("quiz"));
+aiExplainBtn.addEventListener("click", () => runAi("explain"));
+aiSaveResultBtn.addEventListener("click", saveAiResult);
+
+async function runAi(action) {
+    if (!currentNote) {
+        aiStatus.textContent = "Select a note first.";
+        aiStatus.className = "ai-status error";
+        return;
+    }
+
+    if (!hasAiKey()) {
+        aiApiKeyInput.value = "";
+        aiSettingsDialog.showModal();
+        return;
+    }
+
+    const plainText = stripHtml(currentNote.content).trim();
+    if (!plainText || plainText.length < 20) {
+        aiStatus.textContent = "Write more content in the note before using AI.";
+        aiStatus.className = "ai-status error";
+        return;
+    }
+
+    const allBtns = [aiSummarizeBtn, aiFlashcardsBtn, aiQuizBtn, aiExplainBtn];
+    allBtns.forEach(btn => btn.disabled = true);
+    aiStatus.textContent = "Thinking...";
+    aiStatus.className = "ai-status";
+    hideAiOutput();
+    pendingAiResult = null;
+
+    try {
+        let prompt;
+        let label;
+
+        switch (action) {
+            case "summarize":
+                prompt = buildSummarizePrompt(plainText);
+                label = "Summary";
+                break;
+            case "explain":
+                prompt = buildExplainPrompt(plainText);
+                label = "Explanation";
+                break;
+            case "flashcards":
+                prompt = buildFlashcardsPrompt(plainText);
+                label = "Generated Flashcards";
+                break;
+            case "quiz":
+                prompt = buildQuizPrompt(plainText);
+                label = "Generated Quiz";
+                break;
+        }
+
+        const result = await askGemini(prompt, action === "flashcards" || action === "quiz");
+
+        aiStatus.textContent = "";
+        pendingAiResult = { action, result };
+
+        if (action === "summarize" || action === "explain") {
+            showAiOutput(label, result, false);
+        } else if (action === "flashcards") {
+            const cards = parseJsonFromAi(result);
+            if (!Array.isArray(cards) || !cards.length) throw new Error("AI did not return valid flashcards.");
+            const preview = cards.map((c, i) => `${i + 1}. Q: ${c.front}\n   A: ${c.back}`).join("\n\n");
+            showAiOutput(label + ` (${cards.length} cards)`, preview, true);
+            pendingAiResult.parsed = cards;
+        } else if (action === "quiz") {
+            const questions = parseJsonFromAi(result);
+            if (!Array.isArray(questions) || !questions.length) throw new Error("AI did not return valid quiz questions.");
+            const letters = ["A", "B", "C", "D"];
+            const preview = questions.map((q, i) => {
+                const opts = q.options.map((o, j) => `   ${letters[j]}. ${o}${j === q.correctIndex ? " ✓" : ""}`).join("\n");
+                return `${i + 1}. ${q.prompt}\n${opts}`;
+            }).join("\n\n");
+            showAiOutput(label + ` (${questions.length} questions)`, preview, true);
+            pendingAiResult.parsed = questions;
+        }
+
+    } catch (error) {
+        aiStatus.textContent = error.message;
+        aiStatus.className = "ai-status error";
+    } finally {
+        allBtns.forEach(btn => btn.disabled = false);
+    }
+}
+
+function showAiOutput(label, content, showSaveBtn) {
+    aiOutputLabel.textContent = label;
+    aiOutputContent.textContent = content;
+    aiOutput.classList.remove("is-hidden");
+
+    if (showSaveBtn) {
+        aiOutputActions.classList.remove("is-hidden");
+    } else {
+        aiOutputActions.classList.add("is-hidden");
+    }
+}
+
+function hideAiOutput() {
+    aiOutput.classList.add("is-hidden");
+    aiOutputContent.textContent = "";
+    aiOutputActions.classList.add("is-hidden");
+    pendingAiResult = null;
+}
+
+function saveAiResult() {
+    if (!pendingAiResult || !currentNote) return;
+
+    const subjectId = currentNote.subjectId || "";
+    const chapterId = currentNote.chapterId || "";
+
+    if (pendingAiResult.action === "flashcards" && pendingAiResult.parsed) {
+        const FLASHCARDS_KEY = "flora-flashcards";
+        let flashcards = [];
+        try {
+            flashcards = JSON.parse(localStorage.getItem(FLASHCARDS_KEY)) || [];
+        } catch (e) { flashcards = []; }
+
+        const now = Date.now();
+        pendingAiResult.parsed.forEach(card => {
+            flashcards.push({
+                id: `fc-${now}-${Math.random().toString(16).slice(2)}`,
+                front: card.front,
+                back: card.back,
+                subjectId,
+                chapterId,
+                createdAt: now,
+                updatedAt: now,
+                reviewCount: 0,
+                lastReviewedAt: null,
+                lastResult: null
+            });
+        });
+
+        localStorage.setItem(FLASHCARDS_KEY, JSON.stringify(flashcards));
+        aiStatus.textContent = `${pendingAiResult.parsed.length} flashcards saved to Flora.`;
+        aiStatus.className = "ai-status";
+
+    } else if (pendingAiResult.action === "quiz" && pendingAiResult.parsed) {
+        const QUIZZES_KEY = "flora-quizzes";
+        let quizzes = [];
+        try {
+            quizzes = JSON.parse(localStorage.getItem(QUIZZES_KEY)) || [];
+        } catch (e) { quizzes = []; }
+
+        const now = Date.now();
+        const noteTitle = currentNote.title || "Untitled Note";
+        const quiz = {
+            id: `quiz-${now}-${Math.random().toString(16).slice(2)}`,
+            title: `AI Quiz: ${noteTitle}`,
+            description: `Auto-generated from "${noteTitle}"`,
+            subjectId,
+            chapterId,
+            questions: pendingAiResult.parsed.map((q, i) => ({
+                id: `q-${now}-${i}`,
+                prompt: q.prompt,
+                options: q.options,
+                correctIndex: q.correctIndex
+            })),
+            createdAt: now,
+            updatedAt: now,
+            attemptCount: 0,
+            lastAttemptAt: null
+        };
+
+        quizzes.push(quiz);
+        localStorage.setItem(QUIZZES_KEY, JSON.stringify(quizzes));
+        aiStatus.textContent = `Quiz "${quiz.title}" saved with ${quiz.questions.length} questions.`;
+        aiStatus.className = "ai-status";
+    }
+
+    hideAiOutput();
+}
