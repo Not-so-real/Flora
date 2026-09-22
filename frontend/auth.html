@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="flora-animated auth-page">
+
+    <main class="auth-container fade-in">
+        <div class="auth-box">
+            <header class="auth-header">
+                <div class="logo-mark">F</div>
+                <h1 id="auth-title">Welcome Back</h1>
+                <p id="auth-subtitle">Log in to your Flora account</p>
+            </header>
+
+            <form id="auth-form" class="auth-form">
+                <div class="form-group" id="name-group" style="display: none;">
+                    <label for="user-name">Full Name</label>
+                    <input type="text" id="user-name" placeholder="Shivam">
+                </div>
+
+                <div class="form-group">
+                    <label for="user-email">Email Address</label>
+                    <input type="email" id="user-email" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-password">Password</label>
+                    <input type="password" id="user-password" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <p id="auth-error" class="auth-error" role="alert"></p>
+
+                <button type="submit" class="primary-btn auth-submit-btn" id="auth-submit-btn">Login</button>
+            </form>
+
+            <footer class="auth-footer">
+                <p id="auth-toggle-text">Don't have an account? <button type="button" id="auth-toggle-btn">Sign Up</button></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
