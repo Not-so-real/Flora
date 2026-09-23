@@ -3,12 +3,18 @@
 //  Handles Firebase Authentication flows.
 // ============================================================
 
-// Initialize Firebase
-if (window.FLORA_FIREBASE_CONFIG) {
+// Initialize Firebase safely
+const hasFirebaseConfig = Boolean(
+    window.FLORA_FIREBASE_CONFIG &&
+    window.FLORA_FIREBASE_CONFIG.apiKey &&
+    !window.FLORA_FIREBASE_CONFIG.apiKey.includes("YOUR_")
+);
+
+if (hasFirebaseConfig && !firebase.apps.length) {
     firebase.initializeApp(window.FLORA_FIREBASE_CONFIG);
 }
 
-const auth = firebase.auth();
+const auth = hasFirebaseConfig ? firebase.auth() : null;
 
 // ── DOM Elements (only present on auth.html) ────────────────
 const authForm = document.getElementById("auth-form");
@@ -28,6 +34,11 @@ let isSignUp = false;
 
 // ── Auth Page Event Listeners ───────────────────────────────
 if (authForm) {
+    if (!auth) {
+        authError.textContent = "Firebase is not configured yet. Add your real values to js/firebase-config.js first.";
+        authSubmitBtn.disabled = true;
+    }
+
     authToggleBtn.addEventListener("click", () => {
         isSignUp = !isSignUp;
         
@@ -94,32 +105,39 @@ function getFriendlyErrorMessage(code) {
 
 // ── Global Auth Guard ───────────────────────────────────────
 // This part runs on every page that includes auth.js
-auth.onAuthStateChanged((user) => {
-    const isAuthPage = window.location.pathname.includes("auth.html");
-    const isLandingPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
+if (auth) {
+    auth.onAuthStateChanged((user) => {
+        const isAuthPage = window.location.pathname.includes("auth.html");
+        const isLandingPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
 
-    if (user) {
-        // User is logged in
-        if (isAuthPage) {
-            window.location.href = "dashboard.html";
+        if (user) {
+            // User is logged in
+            if (isAuthPage) {
+                window.location.href = "dashboard.html";
+            }
+            
+            // Optional: Update UI on other pages (like header names)
+            const profileName = document.querySelector(".sidebar-profile h4, .notes-nav-avatar, .res-avatar, .quiz-avatar, .flashcards-avatar");
+            if (profileName && user.displayName) {
+                if (profileName.tagName === "H4") profileName.textContent = user.displayName;
+                else profileName.textContent = user.displayName.charAt(0).toUpperCase();
+            }
+        } else {
+            // User is logged out
+            if (!isAuthPage && !isLandingPage) {
+                window.location.href = "auth.html";
+            }
         }
-        
-        // Optional: Update UI on other pages (like header names)
-        const profileName = document.querySelector(".sidebar-profile h4, .notes-nav-avatar, .res-avatar");
-        if (profileName && user.displayName) {
-            if (profileName.tagName === "H4") profileName.textContent = user.displayName;
-            else profileName.textContent = user.displayName.charAt(0).toUpperCase();
-        }
-    } else {
-        // User is logged out
-        if (!isAuthPage && !isLandingPage) {
-            window.location.href = "auth.html";
-        }
-    }
-});
+    });
+}
 
 // ── Logout Function ─────────────────────────────────────────
 window.floraLogout = function() {
+    if (!auth) {
+        window.location.href = "index.html";
+        return;
+    }
+
     auth.signOut().then(() => {
         window.location.href = "index.html";
     }).catch((error) => {

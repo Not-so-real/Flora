@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora | Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body class="flora-animated settings-page-body">
+    <main class="settings-page fade-in">
+        <header class="settings-header">
+            <a href="dashboard.html" class="back-btn" style="margin-bottom: 26px;">Back to Dashboard</a>
+            <p class="settings-eyebrow">Account and app</p>
+            <h1>Settings</h1>
+            <p>Manage your profile, AI configuration, and local study data.</p>
+        </header>
+
+        <section class="settings-grid">
+            <article class="settings-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="settings-eyebrow small">Account</p>
+                        <h2>Profile</h2>
+                    </div>
+                </div>
+                <form id="profile-form" class="settings-form">
+                    <label for="settings-display-name">Display name</label>
+                    <input type="text" id="settings-display-name" maxlength="60" placeholder="Your name">
+
+                    <label for="settings-email">Email</label>
+                    <input type="email" id="settings-email" readonly>
+
+                    <p id="profile-status" class="settings-status"></p>
+
+                    <div class="settings-actions">
+                        <button type="button" class="secondary-settings-btn" id="send-password-reset-btn">Send Password Reset</button>
+                        <button type="submit" class="primary-btn">Save Profile</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="settings-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="settings-eyebrow small">AI</p>
+                        <h2>AI Settings</h2>
+                    </div>
+                </div>
+                <form id="ai-settings-form-page" class="settings-form">
+                    <label for="settings-ai-key">OpenRouter API Key</label>
+                    <input type="password" id="settings-ai-key" placeholder="sk-or-v1-...">
+
+                    <label for="settings-ai-model">Preferred model</label>
+                    <input type="text" id="settings-ai-model" placeholder="meta-llama/llama-3.3-70b-instruct:free">
+
+                    <p class="settings-help">These are stored only in your browser for now.</p>
+                    <p id="ai-settings-status" class="settings-status"></p>
+
+                    <div class="settings-actions">
+                        <button type="button" class="secondary-settings-btn" id="clear-ai-settings-btn">Clear AI Settings</button>
+                        <button type="submit" class="primary-btn">Save AI Settings</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="settings-card settings-card-wide danger-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="settings-eyebrow small">Storage</p>
+                        <h2>Local Study Data</h2>
+                    </div>
+                </div>
+                <p class="settings-copy">Your current Flora prototype stores notes, subjects, flashcards, quizzes, attempts, planner tasks, and resources in this browser.</p>
+                <div class="danger-actions">
+                    <button type="button" class="danger-btn" id="clear-local-data-btn">Clear Local Study Data</button>
+                    <button type="button" class="secondary-settings-btn" id="download-backup-btn">Download Backup</button>
+                </div>
+                <p id="storage-status" class="settings-status"></p>
+            </article>
+
+            <article class="settings-card settings-card-wide">
+                <div class="card-heading">
+                    <div>
+                        <p class="settings-eyebrow small">Session</p>
+                        <h2>Sign Out</h2>
+                    </div>
+                </div>
+                <p class="settings-copy">Sign out of Flora on this browser.</p>
+                <div class="settings-actions left">
+                    <button type="button" class="secondary-settings-btn" id="sign-out-btn">Sign Out</button>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>

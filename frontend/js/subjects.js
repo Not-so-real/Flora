@@ -103,36 +103,8 @@ function loadSubjects() {
         }
     }
 
-    const starterChapters = [
-        "Arrays and Strings", "Linked Lists", "Stacks and Queues", "Trees",
-        "Graphs", "Hash Tables", "Heaps", "Sorting Algorithms",
-        "Searching Algorithms", "Dynamic Programming", "Greedy Algorithms",
-        "Recursion", "Bit Manipulation", "Object-Oriented Design",
-        "System Design Basics", "Databases", "Networking Basics", "Operating Systems Basics"
-    ].map((name, index) => ({
-        id: `chapter-${index + 1}`,
-        name,
-        description: "",
-        completed: index < 14,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-    }));
-
-    const starterSubject = {
-        id: "computer-science",
-        name: "Computer Science",
-        description: "Data structures, algorithms, and programming fundamentals.",
-        chapters: starterChapters,
-        completedChapters: 14,
-        totalChapters: 18,
-        currentTopic: "Computer Science",
-        currentChapter: "Trees",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-    };
-
-    localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify([starterSubject]));
-    return [starterSubject];
+    // No demo data — new users start with an empty subject list
+    return [];
 }
 
 function normalizeSubject(subject) {
@@ -157,8 +129,8 @@ function normalizeSubject(subject) {
         chapters,
         completedChapters: countCompletedChapters(chapters),
         totalChapters: chapters.length,
-        currentTopic: String(subject.currentTopic || (id === "computer-science" ? "Data Structures" : "")).trim(),
-        currentChapter: String(subject.currentChapter || (id === "computer-science" ? "Chapter 4: Trees" : "")).trim(),
+        currentTopic: String(subject.currentTopic || "").trim(),
+        currentChapter: String(subject.currentChapter || "").trim(),
         createdAt: Number(subject.createdAt) || Date.now(),
         updatedAt: Number(subject.updatedAt) || Date.now()
     };

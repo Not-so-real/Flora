@@ -36,16 +36,16 @@
                 <a href="flashcards.html" class="nav-item">Flashcards</a>
                 <a href="quiz.html" class="nav-item">Quizzes</a>
                 <a href="resources.html" class="nav-item">Resources</a>
-                <a href="#" class="nav-item disabled">Planner <small>Soon</small></a>
-                <a href="#" class="nav-item disabled">Progress <small>Soon</small></a>
-                <a href="#" class="nav-item disabled">Settings <small>Soon</small></a>
+                <a href="planner.html" class="nav-item">Planner</a>
+                <a href="progress.html" class="nav-item">Progress</a>
+                <a href="settings.html" class="nav-item">Settings</a>
             </nav>
 
             <div class="sidebar-profile">
 
-                <h4>Shivam</h4>
+                <h4 id="sidebar-user-name">Student</h4>
 
-                <p>Student</p>
+                <p id="sidebar-user-role">Student</p>
 
             </div>
 
@@ -55,7 +55,7 @@
 
             <section class="dashboard-header">
 
-                <h1>Good Afternoon, Guest User 👋</h1>
+                <h1 id="dashboard-greeting">Welcome 👋</h1>
 
                 <p>Let's continue your learning journey.</p>
 
@@ -202,6 +202,10 @@
         </form>
     </dialog>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/subjects.js"></script>
     <script src="js/dashboard.js"></script>
 
