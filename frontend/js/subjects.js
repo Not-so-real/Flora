@@ -14,9 +14,46 @@ const subjectNameInput = document.getElementById("subject-name");
 const subjectDescriptionInput = document.getElementById("subject-description");
 const subjectFormError = document.getElementById("subject-form-error");
 
-let subjects = loadSubjects();
+let subjects = []; // Now loaded from Cloud
+let unsubscribeSubjects = null;
 
 newSubjectBtn.addEventListener("click", () => openSubjectDialog());
+
+// ── 1. Handle Auth State for Database ────────────────────────
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        startSyncingSubjects();
+    } else {
+        if (unsubscribeSubjects) unsubscribeSubjects();
+        subjects = [];
+        renderSubjects();
+    }
+});
+
+function startSyncingSubjects() {
+    // 1. Initial check: move local data to cloud once if it exists
+    const local = loadSubjectsFromLocal();
+    if (local.length > 0) {
+        console.log("Migrating local subjects to cloud...");
+        local.forEach(s => saveToCloud("subjects", s));
+        localStorage.removeItem(SUBJECTS_STORAGE_KEY);
+    }
+
+    // 2. Set up live listener
+    if (unsubscribeSubjects) unsubscribeSubjects();
+    unsubscribeSubjects = onCloudUpdate("subjects", (cloudItems) => {
+        subjects = cloudItems.map(normalizeSubject).filter(Boolean);
+        renderSubjects();
+        updateContinueStudyLink();
+    });
+}
+
+function loadSubjectsFromLocal() {
+    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
+    try {
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+}
 subjectDialogClose.addEventListener("click", closeSubjectDialog);
 subjectCancelBtn.addEventListener("click", closeSubjectDialog);
 subjectForm.addEventListener("submit", saveSubjectFromForm);
@@ -224,7 +261,7 @@ function updateSubjectStats(subject) {
 }
 
 function saveSubjects() {
-    localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify(subjects));
+    // Legacy helper - cloud handles this now via saveToCloud
 }
 
 function createSubjectId() {
@@ -276,15 +313,19 @@ function saveSubjectFromForm(event) {
         return;
     }
 
-    if (id) {
-        const subject = subjects.find(item => item.id === id);
-        if (!subject) return;
+    let subjectData;
 
-        subject.name = name;
-        subject.description = description;
-        subject.updatedAt = Date.now();
+    if (id) {
+        const existing = subjects.find(item => item.id === id);
+        if (!existing) return;
+
+        subjectData = {
+            ...existing,
+            name: name,
+            description: description
+        };
     } else {
-        subjects.push({
+        subjectData = {
             id: createSubjectId(),
             name,
             description,
@@ -295,13 +336,18 @@ function saveSubjectFromForm(event) {
             currentChapter: "",
             createdAt: Date.now(),
             updatedAt: Date.now()
-        });
+        };
     }
 
-    saveSubjects();
-    closeSubjectDialog();
-    renderSubjects();
-    updateContinueStudyLink();
+    saveToCloud("subjects", subjectData)
+        .then(() => {
+            closeSubjectDialog();
+            // renderSubjects will be called automatically by the onCloudUpdate listener
+        })
+        .catch(err => {
+            console.error("Save failed:", err);
+            subjectFormError.textContent = "Could not sync with cloud. Try again.";
+        });
 }
 
 function deleteSubject(subject) {
@@ -311,15 +357,17 @@ function deleteSubject(subject) {
 
     if (!confirmed) return;
 
-    subjects = subjects.filter(item => item.id !== subject.id);
-
-    if (localStorage.getItem(CURRENT_SUBJECT_KEY) === subject.id) {
-        localStorage.removeItem(CURRENT_SUBJECT_KEY);
-    }
-
-    saveSubjects();
-    renderSubjects();
-    updateContinueStudyLink();
+    deleteFromCloud("subjects", subject.id)
+        .then(() => {
+            if (localStorage.getItem(CURRENT_SUBJECT_KEY) === subject.id) {
+                localStorage.removeItem(CURRENT_SUBJECT_KEY);
+            }
+            // UI updates automatically via listener
+        })
+        .catch(err => {
+            console.error("Delete failed:", err);
+            alert("Could not delete from cloud. Try again.");
+        });
 }
 
 function getProgress(subject) {

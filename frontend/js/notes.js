@@ -27,6 +27,8 @@ const toolbarBtns      = document.querySelectorAll(".toolbar-btn");
 const DEFAULT_FOLDER = { id: "folder-default", name: "All Notes" };
 const SUBJECTS_STORAGE_KEY = "flora-subjects";
 const CURRENT_SUBJECT_KEY = "flora-current-subject";
+const NOTES_STORAGE_KEY = "flora-notes";
+const FOLDERS_STORAGE_KEY = "flora-folders";
 
 // ── App state ────────────────────────────────────────────────
 let folders       = [];
@@ -35,7 +37,30 @@ let notes         = [];
 let currentNote   = null;
 let saveTimer     = null;   // debounce handle for save indicator
 let saveHideTimer = null;
+let cloudSaveTimer = null;  // debounce handle for cloud saves
 let subjects      = [];
+
+// Debounced cloud save — waits 800ms after last edit before pushing to Firestore
+function debouncedCloudSave() {
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(() => {
+        if (!currentNote) return;
+
+        // Remove the _isNew flag on first real save
+        if (currentNote._isNew) {
+            delete currentNote._isNew;
+        }
+
+        saveToCloud("notes", currentNote).catch(error => {
+            console.error("Could not sync note to cloud:", error);
+        });
+    }, 800);
+}
+
+const showNewSubjectBtn = document.getElementById("show-new-subject-btn");
+const newSubjectInput   = document.getElementById("new-subject-input");
+const showNewChapterBtn = document.getElementById("show-new-chapter-btn");
+const newChapterInput   = document.getElementById("new-chapter-input");
 
 const noteContext = new URLSearchParams(window.location.search);
 let activeSubjectFilter = noteContext.get("subject") || "";
@@ -102,6 +127,7 @@ noteTitle.addEventListener("input", () => {
     currentNote.updatedAt = Date.now();
 
     saveNotes();
+    debouncedCloudSave();
     renderFolders();
     renderNotes(filterNotes(noteSearch.value));
     showSaveStatus();
@@ -113,10 +139,10 @@ noteFolderSelect.addEventListener("change", () => {
     currentNote.folderId  = noteFolderSelect.value;
     currentNote.updatedAt = Date.now();
 
-    // Highlight the folder the note just moved to
     currentFolder = folders.find(f => f.id === currentNote.folderId) || folders[0];
 
     saveNotes();
+    debouncedCloudSave();
     renderFolders();
     renderNotes(filterNotes(noteSearch.value));
     showSaveStatus();
@@ -131,6 +157,7 @@ noteSubjectSelect.addEventListener("change", () => {
         currentNote.chapter = "";
         currentNote.updatedAt = Date.now();
         saveNotes();
+        debouncedCloudSave();
         renderNotes(filterNotes(noteSearch.value));
         showSaveStatus();
     } else {
@@ -159,9 +186,161 @@ noteChapterSelect.addEventListener("change", () => {
     currentNote.updatedAt = Date.now();
 
     saveNotes();
+    debouncedCloudSave();
     renderNotes(filterNotes(noteSearch.value));
     showSaveStatus();
 });
+
+// ── Sidebar Subject & Chapter Creation ───────────────────────
+
+showNewSubjectBtn.addEventListener("click", () => {
+    noteSubjectFilter.classList.add("is-hidden");
+    showNewSubjectBtn.classList.add("is-hidden");
+    newSubjectInput.classList.remove("is-hidden");
+    newSubjectInput.focus();
+});
+
+newSubjectInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        createSubjectSidebar();
+    }
+    if (event.key === "Escape") {
+        resetSubjectInput();
+    }
+});
+
+newSubjectInput.addEventListener("blur", () => {
+    if (newSubjectInput.value.trim()) {
+        createSubjectSidebar();
+    } else {
+        resetSubjectInput();
+    }
+});
+
+function resetSubjectInput() {
+    newSubjectInput.value = "";
+    newSubjectInput.classList.add("is-hidden");
+    noteSubjectFilter.classList.remove("is-hidden");
+    showNewSubjectBtn.classList.remove("is-hidden");
+}
+
+function createSubjectSidebar() {
+    const name = newSubjectInput.value.trim();
+    if (!name) {
+        resetSubjectInput();
+        return;
+    }
+
+    if (subjects.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        alert(`A subject named "${name}" already exists.`);
+        resetSubjectInput();
+        return;
+    }
+
+    const newSubject = {
+        id: `subject-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        name: name,
+        description: "",
+        chapters: [],
+        completedChapters: 0,
+        totalChapters: 0,
+        currentTopic: "",
+        currentChapter: "",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+
+    activeSubjectFilter = newSubject.id;
+    activeChapterFilter = "";
+    pendingSubjectId = newSubject.id;
+    pendingChapterId = "";
+    resetSubjectInput();
+
+    saveToCloud("subjects", newSubject).catch(err => {
+        console.error("Could not save subject to cloud:", err);
+    });
+}
+
+showNewChapterBtn.addEventListener("click", () => {
+    noteChapterFilter.classList.add("is-hidden");
+    showNewChapterBtn.classList.add("is-hidden");
+    newChapterInput.classList.remove("is-hidden");
+    newChapterInput.focus();
+});
+
+newChapterInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        createChapterSidebar();
+    }
+    if (event.key === "Escape") {
+        resetChapterInput();
+    }
+});
+
+newChapterInput.addEventListener("blur", () => {
+    if (newChapterInput.value.trim()) {
+        createChapterSidebar();
+    } else {
+        resetChapterInput();
+    }
+});
+
+function resetChapterInput() {
+    newChapterInput.value = "";
+    newChapterInput.classList.add("is-hidden");
+    noteChapterFilter.classList.remove("is-hidden");
+    showNewChapterBtn.classList.remove("is-hidden");
+}
+
+function createChapterSidebar() {
+    const name = newChapterInput.value.trim();
+    if (!name) {
+        resetChapterInput();
+        return;
+    }
+
+    const subjectId = activeSubjectFilter || pendingSubjectId;
+    if (!subjectId) {
+        resetChapterInput();
+        return;
+    }
+
+    const subject = findSubject(subjectId);
+    if (!subject) {
+        resetChapterInput();
+        return;
+    }
+
+    if (Array.isArray(subject.chapters) && subject.chapters.some(ch => ch.name.toLowerCase() === name.toLowerCase())) {
+        alert(`A chapter named "${name}" already exists in this subject.`);
+        resetChapterInput();
+        return;
+    }
+
+    const newChapter = {
+        id: `chapter-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        name: name,
+        description: "",
+        completed: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+
+    if (!Array.isArray(subject.chapters)) subject.chapters = [];
+    subject.chapters.push(newChapter);
+    subject.totalChapters = subject.chapters.length;
+    subject.updatedAt = Date.now();
+
+    activeChapterFilter = newChapter.id;
+    pendingChapterId = newChapter.id;
+    resetChapterInput();
+
+    saveToCloud("subjects", subject).catch(err => {
+        console.error("Could not save chapter to cloud:", err);
+    });
+}
 
 noteSubjectFilter.addEventListener("change", () => {
     activeSubjectFilter = noteSubjectFilter.value;
@@ -201,30 +380,95 @@ clearNoteFilters.addEventListener("click", () => {
     updateFilterUrl();
 });
 
-loadSubjects();
-loadFolders();
-loadNotes();
-renderFolders();
-renderSubjectSelect();
-renderChapterSelect();
-renderNoteFilters();
-renderNotes();
+// ── Cloud boot ───────────────────────────────────────────────
+let unsubscribeSubjects = null;
+let unsubscribeFolders = null;
+let unsubscribeNotes = null;
+
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) {
+        window.location.href = "auth.html";
+        return;
+    }
+
+    await migrateLocalNotesData();
+    startNotesSync();
+});
+
+async function startNotesSync() {
+    if (unsubscribeSubjects) unsubscribeSubjects();
+    if (unsubscribeFolders) unsubscribeFolders();
+    if (unsubscribeNotes) unsubscribeNotes();
+
+    unsubscribeSubjects = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.map(normalizeSubjectLite).filter(Boolean);
+        validateSubjectContext();
+        syncNoteMetaControls();
+        renderNoteFilters();
+        renderNotes(filterNotes(noteSearch.value));
+    });
+
+    unsubscribeFolders = onCloudUpdate("folders", cloudFolders => {
+        folders = normalizeFolders(cloudFolders);
+        if (!currentFolder || !folders.some(folder => folder.id === currentFolder.id)) {
+            currentFolder = folders[0] || { ...DEFAULT_FOLDER };
+        }
+        localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+        renderFolders();
+        syncCurrentNoteToFilters();
+        renderNotes(filterNotes(noteSearch.value));
+    });
+
+    unsubscribeNotes = onCloudUpdate("notes", cloudNotes => {
+        notes = normalizeNotes(cloudNotes);
+        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+
+        if (!currentNote || !notes.some(note => note.id === currentNote.id)) {
+            syncCurrentNoteToFilters();
+        } else {
+            const syncedCurrent = notes.find(note => note.id === currentNote.id);
+            currentNote = syncedCurrent;
+            setNoteTitle(currentNote.title);
+            setEditorContent(currentNote.content);
+            syncNoteMetaControls();
+        }
+
+        renderFolders();
+        renderNoteFilters();
+        renderNotes(filterNotes(noteSearch.value));
+    });
+}
+
+async function migrateLocalNotesData() {
+    const [cloudSubjects, cloudFolders, cloudNotes] = await Promise.all([
+        fetchFromCloud("subjects"),
+        fetchFromCloud("folders"),
+        fetchFromCloud("notes")
+    ]);
+
+    if (!cloudFolders.length) {
+        const localFolders = loadFoldersFromLocal();
+        const foldersToSave = localFolders.length ? localFolders : [{ ...DEFAULT_FOLDER }];
+        await Promise.all(foldersToSave.map(folder => saveToCloud("folders", folder)));
+    }
+
+    if (!cloudNotes.length) {
+        const localNotes = loadNotesFromLocal();
+        if (localNotes.length) {
+            await Promise.all(localNotes.map(note => saveToCloud("notes", note)));
+        }
+    }
+
+    if (cloudSubjects.length) {
+        subjects = cloudSubjects.map(normalizeSubjectLite).filter(Boolean);
+        validateSubjectContext();
+    }
+}
 
 // ============================================================
 //  SUBJECTS + CHAPTERS
 // ============================================================
-function loadSubjects() {
-    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-    if (!raw) return;
-
-    try {
-        const storedSubjects = JSON.parse(raw);
-        subjects = Array.isArray(storedSubjects) ? storedSubjects : [];
-    } catch (error) {
-        console.error("Could not load subjects:", error);
-        subjects = [];
-    }
-
+function validateSubjectContext() {
     if (!subjects.some(subject => subject.id === pendingSubjectId)) {
         pendingSubjectId = "";
         pendingChapterId = "";
@@ -238,6 +482,22 @@ function loadSubjects() {
     if (activeChapterFilter && !findChapter(activeSubjectFilter, activeChapterFilter)) {
         activeChapterFilter = "";
     }
+}
+
+function normalizeSubjectLite(subject) {
+    if (!subject || !subject.id || !subject.name) return null;
+    return {
+        ...subject,
+        id: String(subject.id),
+        name: String(subject.name).trim(),
+        chapters: Array.isArray(subject.chapters)
+            ? subject.chapters.map(chapter => ({
+                ...chapter,
+                id: String(chapter.id),
+                name: String(chapter.name || "").trim()
+            }))
+            : []
+    };
 }
 
 function findSubject(subjectId) {
@@ -292,6 +552,7 @@ function renderChapterSelect() {
     });
 
     noteChapterSelect.disabled = !subjectId || chapters.length === 0;
+    addChapterInlineBtn.disabled = !subjectId;
 }
 
 function syncNoteMetaControls() {
@@ -307,6 +568,8 @@ function renderNoteFilters() {
     allSubjectsOption.value = "";
     allSubjectsOption.textContent = "All subjects";
     noteSubjectFilter.appendChild(allSubjectsOption);
+
+    showNewChapterBtn.disabled = !activeSubjectFilter;
 
     subjects.forEach(subject => {
         const option = document.createElement("option");
@@ -397,33 +660,37 @@ function syncCurrentNoteToFilters() {
 // ============================================================
 //  FOLDERS
 // ============================================================
-function loadFolders() {
-    const raw = localStorage.getItem("flora-folders");
+function loadFoldersFromLocal() {
+    const raw = localStorage.getItem(FOLDERS_STORAGE_KEY);
+    if (!raw) return [];
 
-    if (raw) {
-        try {
-            folders = JSON.parse(raw);
-        } catch (error) {
-            console.error("Could not load folders:", error);
-            folders = [];
-        }
+    try {
+        const storedFolders = JSON.parse(raw);
+        return Array.isArray(storedFolders) ? storedFolders : [];
+    } catch (error) {
+        console.error("Could not load folders:", error);
+        return [];
+    }
+}
+
+function normalizeFolders(cloudFolders) {
+    const normalized = Array.isArray(cloudFolders)
+        ? cloudFolders.map(folder => ({
+            id: String(folder.id || ""),
+            name: String(folder.name || "").trim()
+        })).filter(folder => folder.id && folder.name)
+        : [];
+
+    if (!normalized.some(folder => folder.id === DEFAULT_FOLDER.id)) {
+        normalized.unshift({ ...DEFAULT_FOLDER });
     }
 
-    if (!Array.isArray(folders)) {
-        folders = [];
-    }
-
-    // Always keep the default folder so notes never lose their bucket
-    if (!folders.some(f => f.id === DEFAULT_FOLDER.id)) {
-        folders.unshift({ ...DEFAULT_FOLDER });
-    }
-
-    currentFolder = folders[0];
+    return normalized;
 }
 
 function saveFolders() {
     try {
-        localStorage.setItem("flora-folders", JSON.stringify(folders));
+        localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
     } catch (error) {
         console.error("Could not save folders:", error);
     }
@@ -438,14 +705,16 @@ function createFolderFromInput() {
         name: name
     };
 
-    folders.push(folder);
     currentFolder = folder;
-
     newFolderInput.value = "";
 
-    saveFolders();
-    renderFolders();
-    renderNotes();
+    saveToCloud("folders", folder)
+        .then(() => {
+            saveFolders();
+        })
+        .catch(error => {
+            console.error("Could not save folder to cloud:", error);
+        });
 }
 
 function deleteFolder(folder) {
@@ -459,19 +728,23 @@ function deleteFolder(folder) {
     );
     if (!confirmed) return;
 
-    notes.forEach(note => {
-        if (note.folderId === folder.id) {
-            note.folderId = DEFAULT_FOLDER.id;
-        }
+    const movedNotes = notes
+        .filter(note => note.folderId === folder.id)
+        .map(note => ({
+            ...note,
+            folderId: DEFAULT_FOLDER.id,
+            updatedAt: Date.now()
+        }));
+
+    Promise.all([
+        ...movedNotes.map(note => saveToCloud("notes", note)),
+        deleteFromCloud("folders", folder.id)
+    ]).then(() => {
+        currentFolder = folders.find(item => item.id === DEFAULT_FOLDER.id) || { ...DEFAULT_FOLDER };
+        saveFolders();
+    }).catch(error => {
+        console.error("Could not delete folder from cloud:", error);
     });
-
-    folders = folders.filter(f => f.id !== folder.id);
-    currentFolder = folders[0];
-
-    saveFolders();
-    saveNotes();
-    renderFolders();
-    renderNotes();
 }
 
 function selectFolder(folder) {
@@ -534,7 +807,7 @@ function createNote() {
     const selectedChapter = findChapter(selectedSubjectId, selectedChapterId);
 
     const note = {
-        id:        Date.now(),
+        id:        String(Date.now()),
         folderId:  currentFolder ? currentFolder.id : DEFAULT_FOLDER.id,
         subjectId:  selectedSubjectId,
         chapterId:  selectedChapter ? selectedChapter.id : "",
@@ -542,18 +815,18 @@ function createNote() {
         title:     "Untitled Note",
         content:   "",
         schemaVersion: 2,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        _isNew:    true  // Flag: don't save to cloud until first real edit
     };
 
-    notes.push(note);
     currentNote = note;
+    notes.push(note);
 
     setNoteTitle(note.title);
     setEditorContent("");
-    noteSearch.value         = "";
+    noteSearch.value = "";
 
     syncNoteMetaControls();
-    saveNotes();
     renderFolders();
     renderNotes();
 
@@ -566,114 +839,73 @@ function createNote() {
 // ============================================================
 function saveNotes() {
     try {
-        localStorage.setItem("flora-notes", JSON.stringify(notes));
+        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
     } catch (error) {
-        console.error("Could not save notes:", error);
+        console.error("Could not save notes locally:", error);
     }
 }
 
-function loadNotes() {
-    const raw = localStorage.getItem("flora-notes");
-
-    if (!raw) {
-        return;
-    }
+function loadNotesFromLocal() {
+    const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+    if (!raw) return [];
 
     try {
-        notes = JSON.parse(raw);
-
-        if (!Array.isArray(notes)) {
-            notes = [];
-        }
-
-        notes.forEach(note => {
-            note.title = String(note.title || "Untitled Note");
-            note.content = String(note.content || "");
-
-            if (!note.updatedAt) {
-                note.updatedAt = Date.now();
-            }
-
-            // Migrate old notes that don't have a folder yet
-            if (!note.folderId) {
-                note.folderId = DEFAULT_FOLDER.id;
-            }
-
-            // Keep legacy notes valid while adding subject/chapter references
-            note.subjectId = note.subjectId || "";
-            note.chapterId = note.chapterId || "";
-            note.chapter = note.chapter || "";
-
-            if (note.schemaVersion !== 2) {
-                note.content = removeLegacyTitleFromContent(note.content, note.title);
-                note.schemaVersion = 2;
-            }
-
-            if (note.subjectId && !findSubject(note.subjectId)) {
-                note.subjectId = "";
-                note.chapterId = "";
-            }
-
-            if (note.subjectId && !note.chapterId && note.chapter) {
-                const subject = findSubject(note.subjectId);
-                const matchedChapter = subject && Array.isArray(subject.chapters)
-                    ? subject.chapters.find(chapter => chapter.name.toLowerCase() === note.chapter.toLowerCase())
-                    : null;
-
-                if (matchedChapter) {
-                    note.chapterId = matchedChapter.id;
-                }
-            }
-
-            if (note.subjectId && note.chapterId) {
-                const linkedChapter = findChapter(note.subjectId, note.chapterId);
-                if (linkedChapter) {
-                    note.chapter = linkedChapter.name;
-                } else {
-                    note.chapterId = "";
-                }
-            }
-
-            // Clean up old label data from earlier experiments
-            if (note.labels) {
-                delete note.labels;
-            }
-        });
-
+        const storedNotes = JSON.parse(raw);
+        return Array.isArray(storedNotes) ? storedNotes : [];
     } catch (error) {
         console.error("Could not load notes:", error);
-        notes = [];
+        return [];
     }
+}
 
-    if (notes.length > 0) {
-        if (pendingSubjectId) {
-            currentNote = notes.find(note =>
-                note.subjectId === pendingSubjectId &&
-                (!pendingChapterId || note.chapterId === pendingChapterId)
-            ) || null;
-        } else {
-            currentNote = notes[0];
+function normalizeNotes(cloudNotes) {
+    return (Array.isArray(cloudNotes) ? cloudNotes : []).map(note => {
+        note.title = String(note.title || "Untitled Note");
+        note.content = String(note.content || "");
+        note.id = String(note.id || Date.now());
+
+        if (!note.updatedAt || typeof note.updatedAt !== "number") {
+            note.updatedAt = Date.now();
         }
 
-        if (!currentNote) {
-            setNoteTitle("");
-            setEditorContent("");
-            syncNoteMetaControls();
-            saveNotes();
-            return;
+        if (!note.folderId) {
+            note.folderId = DEFAULT_FOLDER.id;
         }
 
-        // Make sure the note's folder still exists
-        const noteFolder = folders.find(f => f.id === currentNote.folderId);
-        if (noteFolder) {
-            currentFolder = noteFolder;
+        note.subjectId = note.subjectId || "";
+        note.chapterId = note.chapterId || "";
+        note.chapter = note.chapter || "";
+
+        if (note.schemaVersion !== 2) {
+            note.content = removeLegacyTitleFromContent(note.content, note.title);
+            note.schemaVersion = 2;
         }
 
-        setNoteTitle(currentNote.title);
-        setEditorContent(currentNote.content);
-        syncNoteMetaControls();
-        saveNotes();
-    }
+        if (note.subjectId && !findSubject(note.subjectId)) {
+            note.subjectId = "";
+            note.chapterId = "";
+        }
+
+        if (note.subjectId && !note.chapterId && note.chapter) {
+            const subject = findSubject(note.subjectId);
+            const matchedChapter = subject && Array.isArray(subject.chapters)
+                ? subject.chapters.find(chapter => chapter.name.toLowerCase() === note.chapter.toLowerCase())
+                : null;
+            if (matchedChapter) note.chapterId = matchedChapter.id;
+        }
+
+        if (note.subjectId && note.chapterId) {
+            const linkedChapter = findChapter(note.subjectId, note.chapterId);
+            if (linkedChapter) {
+                note.chapter = linkedChapter.name;
+            } else {
+                note.chapterId = "";
+            }
+        }
+
+        if (note.labels) delete note.labels;
+        return note;
+    });
 }
 
 // ============================================================
@@ -917,6 +1149,10 @@ function renderNoteCard(note) {
         const deletedCurrentNote = currentNote && currentNote.id === note.id;
         notes = notes.filter(item => item.id !== note.id);
 
+        deleteFromCloud("notes", note.id).catch(error => {
+            console.error("Could not delete note from cloud:", error);
+        });
+
         saveNotes();
         renderFolders();
 
@@ -1017,8 +1253,9 @@ noteEditor.addEventListener("input", () => {
     // Stamp the edit time
     currentNote.updatedAt = Date.now();
 
-    // Persist and re-render sidebar
+    // Persist locally and queue cloud save
     saveNotes();
+    debouncedCloudSave();
     renderFolders();
     renderNotes(filterNotes(noteSearch.value));
 

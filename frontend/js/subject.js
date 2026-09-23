@@ -33,8 +33,8 @@ const chapterCompletedInput = document.getElementById("chapter-completed");
 const chapterFormError = document.getElementById("chapter-form-error");
 const newChapterBtn = document.getElementById("new-chapter-btn");
 
-let subjects = loadSubjects();
-let currentSubject = getCurrentSubject();
+let subjects = [];
+let currentSubject = null;
 const notes = loadNotes();
 const flashcards = loadFlashcards();
 const quizzes = loadQuizzes();
@@ -51,36 +51,31 @@ chapterDialog.addEventListener("click", event => {
     }
 });
 
-renderSubject();
-
-function getCurrentSubject() {
-    const queryId = new URLSearchParams(window.location.search).get("id");
-    const storedId = localStorage.getItem(CURRENT_SUBJECT_KEY);
-    const requestedId = queryId || storedId;
-    const subject = subjects.find(item => item.id === requestedId);
-
-    if (subject) {
-        localStorage.setItem(CURRENT_SUBJECT_KEY, subject.id);
-        return subject;
+// ── Load subjects from Firestore live ────────────────────────
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+        window.location.href = "auth.html";
+        return;
     }
 
-    return subjects[0] || null;
-}
+    onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.map(normalizeSubject).filter(Boolean);
 
-function loadSubjects() {
-    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-    if (!raw) return [];
+        const queryId = new URLSearchParams(window.location.search).get("id");
+        const storedId = localStorage.getItem(CURRENT_SUBJECT_KEY);
+        const requestedId = queryId || storedId;
 
-    try {
-        const storedSubjects = JSON.parse(raw);
-        if (!Array.isArray(storedSubjects)) return [];
+        currentSubject = subjects.find(s => s.id === requestedId) || subjects[0] || null;
 
-        return storedSubjects.map(normalizeSubject).filter(Boolean);
-    } catch (error) {
-        console.error("Could not load subjects:", error);
-        return [];
-    }
-}
+        if (currentSubject) {
+            localStorage.setItem(CURRENT_SUBJECT_KEY, currentSubject.id);
+        }
+
+        renderSubject();
+    });
+});
+
+// getCurrentSubject is now handled inline in the auth listener above.
 
 function loadNotes() {
     const raw = localStorage.getItem("flora-notes");
@@ -241,7 +236,16 @@ function migrateLegacyChapters(subject) {
 }
 
 function saveSubjects() {
-    localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify(subjects));
+    // Legacy — cloud handles persistence via persistSubject()
+}
+
+function persistSubject(subject) {
+    updateSubjectStats(subject);
+    subject.updatedAt = Date.now();
+    return saveToCloud("subjects", subject).catch(err => {
+        console.error("Could not save subject to cloud:", err);
+        chapterFormError.textContent = "Cloud save failed. Check connection.";
+    });
 }
 
 function createChapterId() {
@@ -262,6 +266,10 @@ function findCurrentChapter(subject) {
 }
 
 function updateSubjectStats(subject) {
+    if (!Array.isArray(subject.chapters)) {
+        subject.chapters = [];
+    }
+
     subject.completedChapters = subject.chapters.filter(c => c.completed).length;
     subject.totalChapters = subject.chapters.length;
 
@@ -286,7 +294,6 @@ function renderSubject() {
     }
 
     updateSubjectStats(currentSubject);
-    saveSubjects();
 
     const progress = computeProgress(currentSubject);
     const currentChapter = findCurrentChapter(currentSubject);
@@ -462,7 +469,6 @@ function saveChapterFromForm(event) {
     if (id) {
         const chapter = currentSubject.chapters.find(c => c.id === id);
         if (!chapter) return;
-
         chapter.name = name;
         chapter.description = description;
         chapter.completed = completed;
@@ -478,20 +484,16 @@ function saveChapterFromForm(event) {
         });
     }
 
-    updateSubjectStats(currentSubject);
-    currentSubject.updatedAt = Date.now();
-    saveSubjects();
-    closeChapterDialog();
-    renderSubject();
+    persistSubject(currentSubject).then(() => {
+        closeChapterDialog();
+        renderSubject();
+    });
 }
 
 function toggleChapterCompletion(chapter) {
     chapter.completed = !chapter.completed;
     chapter.updatedAt = Date.now();
-    updateSubjectStats(currentSubject);
-    currentSubject.updatedAt = Date.now();
-    saveSubjects();
-    renderSubject();
+    persistSubject(currentSubject).then(() => renderSubject());
 }
 
 function deleteChapter(chapter) {
@@ -501,8 +503,5 @@ function deleteChapter(chapter) {
     if (!confirmed) return;
 
     currentSubject.chapters = currentSubject.chapters.filter(c => c.id !== chapter.id);
-    updateSubjectStats(currentSubject);
-    currentSubject.updatedAt = Date.now();
-    saveSubjects();
-    renderSubject();
+    persistSubject(currentSubject).then(() => renderSubject());
 }

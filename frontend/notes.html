@@ -59,11 +59,17 @@
 
             <div class="notes-filter-section">
                 <div class="notes-filter-header">
-                    <h3>View Notes</h3>
-                    <button type="button" id="clear-note-filters" class="clear-note-filters">Clear</button>
+                    <h3>Subjects & Chapters</h3>
+                    <button type="button" id="clear-note-filters" class="clear-note-filters">Clear View</button>
                 </div>
                 <select id="note-subject-filter" aria-label="Filter notes by subject"></select>
+                <input type="text" id="new-subject-input" class="new-folder-input is-hidden" placeholder="+ New subject">
+                <button type="button" class="sidebar-add-btn" id="show-new-subject-btn">+ Add Subject</button>
+
                 <select id="note-chapter-filter" aria-label="Filter notes by chapter"></select>
+                <input type="text" id="new-chapter-input" class="new-folder-input is-hidden" placeholder="+ New chapter">
+                <button type="button" class="sidebar-add-btn" id="show-new-chapter-btn">+ Add Chapter</button>
+                
                 <p class="notes-filter-context" id="notes-filter-context"></p>
             </div>
 
@@ -234,8 +240,10 @@
     </main>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/firebase-db.js"></script>
     <script src="js/ai.js" defer></script>
     <script src="js/notes.js" defer></script>
 </body>
