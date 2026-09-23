@@ -102,7 +102,145 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/settings.js"></script>
+    <script>
+    // ── Initialize Firebase ───────────────────────────────────
+    const _cfg = window.FLORA_FIREBASE_CONFIG;
+    const _firebaseReady = Boolean(_cfg && _cfg.apiKey && !_cfg.apiKey.includes("YOUR_"));
+    if (_firebaseReady && !firebase.apps.length) {
+        firebase.initializeApp(_cfg);
+    }
+
+    // ── AI Settings: fill immediately from localStorage ───────
+    document.getElementById("settings-ai-key").value   = localStorage.getItem("flora-ai-key")   || "";
+    document.getElementById("settings-ai-model").value = localStorage.getItem("flora-ai-model") || "";
+
+    // ── Profile: fill as soon as Firebase gives us the user ───
+    if (_firebaseReady) {
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
+                // Not logged in — redirect to login
+                window.location.href = "auth.html";
+                return;
+            }
+            document.getElementById("settings-display-name").value = user.displayName || "";
+            document.getElementById("settings-email").value        = user.email        || "";
+        });
+    }
+
+    // ── Profile Save ──────────────────────────────────────────
+    document.getElementById("profile-form").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        var status = document.getElementById("profile-status");
+        if (!_firebaseReady || !firebase.auth().currentUser) {
+            status.textContent = "Not logged in.";
+            status.className = "settings-status error";
+            return;
+        }
+        var name = document.getElementById("settings-display-name").value.trim();
+        if (!name) {
+            status.textContent = "Name cannot be empty.";
+            status.className = "settings-status error";
+            return;
+        }
+        try {
+            await firebase.auth().currentUser.updateProfile({ displayName: name });
+            status.textContent = "Profile updated successfully.";
+            status.className = "settings-status success";
+        } catch(err) {
+            status.textContent = "Could not save. " + err.message;
+            status.className = "settings-status error";
+        }
+    });
+
+    // ── Password Reset ────────────────────────────────────────
+    document.getElementById("send-password-reset-btn").addEventListener("click", async function() {
+        var status = document.getElementById("profile-status");
+        if (!_firebaseReady) return;
+        var user = firebase.auth().currentUser;
+        if (!user) return;
+        try {
+            await firebase.auth().sendPasswordResetEmail(user.email);
+            status.textContent = "Reset email sent to " + user.email;
+            status.className = "settings-status success";
+        } catch(err) {
+            status.textContent = "Could not send email. " + err.message;
+            status.className = "settings-status error";
+        }
+    });
+
+    // ── AI Settings Save ──────────────────────────────────────
+    document.getElementById("ai-settings-form-page").addEventListener("submit", function(e) {
+        e.preventDefault();
+        var key   = document.getElementById("settings-ai-key").value.trim();
+        var model = document.getElementById("settings-ai-model").value.trim();
+        if (key)   localStorage.setItem("flora-ai-key",   key);
+        if (model) localStorage.setItem("flora-ai-model", model);
+        var status = document.getElementById("ai-settings-status");
+        status.textContent = "AI settings saved.";
+        status.className = "settings-status success";
+        setTimeout(function(){ status.textContent = ""; }, 2500);
+    });
+
+    // ── Clear AI Settings ─────────────────────────────────────
+    document.getElementById("clear-ai-settings-btn").addEventListener("click", function() {
+        if (!confirm("Clear your saved OpenRouter API key and model?")) return;
+        localStorage.removeItem("flora-ai-key");
+        localStorage.removeItem("flora-ai-model");
+        document.getElementById("settings-ai-key").value   = "";
+        document.getElementById("settings-ai-model").value = "";
+        var status = document.getElementById("ai-settings-status");
+        status.textContent = "AI settings cleared.";
+        status.className = "settings-status success";
+    });
+
+    // ── Clear Study Data ──────────────────────────────────────
+    document.getElementById("clear-local-data-btn").addEventListener("click", function() {
+        if (!confirm("This will erase ALL your local Flora study data. This cannot be undone. Continue?")) return;
+        ["flora-subjects","flora-current-subject","flora-notes","flora-folders",
+         "flora-flashcards","flora-quizzes","flora-quiz-attempts","flora-resources",
+         "flora-planner","flora-ai-key","flora-ai-model"
+        ].forEach(function(k){ localStorage.removeItem(k); });
+        var status = document.getElementById("storage-status");
+        status.textContent = "Local study data cleared.";
+        status.className = "settings-status success";
+    });
+
+    // ── Download Backup ───────────────────────────────────────
+    document.getElementById("download-backup-btn").addEventListener("click", function() {
+        var backup = {};
+        ["flora-subjects","flora-current-subject","flora-notes","flora-folders",
+         "flora-flashcards","flora-quizzes","flora-quiz-attempts","flora-resources",
+         "flora-planner","flora-ai-key","flora-ai-model"
+        ].forEach(function(k){
+            var v = localStorage.getItem(k);
+            if (v !== null) backup[k] = v;
+        });
+        var blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+        var url  = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "flora-backup-" + new Date().toISOString().slice(0,10) + ".json";
+        link.click();
+        URL.revokeObjectURL(url);
+        var status = document.getElementById("storage-status");
+        status.textContent = "Backup downloaded.";
+        status.className = "settings-status success";
+    });
+
+    // ── Sign Out ──────────────────────────────────────────────
+    document.getElementById("sign-out-btn").addEventListener("click", function() {
+        if (!_firebaseReady) {
+            window.location.href = "index.html";
+            return;
+        }
+        firebase.auth().signOut().then(function() {
+            window.location.href = "index.html";
+        }).catch(function(err) {
+            var status = document.getElementById("storage-status");
+            status.textContent = "Could not sign out. " + err.message;
+            status.className = "settings-status error";
+        });
+    });
+    </script>
 </body>
 </html>
