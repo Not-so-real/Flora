@@ -53,13 +53,15 @@ let activeChapterFilter = activeSubjectFilter ? (pageContext.get("chapter") || "
 let pendingSubjectId = activeSubjectFilter || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
 let pendingChapterId = activeChapterFilter;
 
-let subjects = loadSubjects();
-let resources = loadResources();
+let subjects = [];
+let resources = [];
 let currentResourceId = null;
 let saveStatusTimer = null;
 let activeObjectUrl = null;
 let currentFile = null;
 let pendingAiResult = null;
+let unsubRes = null;
+let unsubSubjectsR = null;
 
 // ── Event Listeners ──────────────────────────────────────────
 
@@ -106,7 +108,6 @@ subjectSelect.addEventListener("change", () => {
 
 typeFilter.addEventListener("change", () => {
     activeTypeFilter = typeFilter.value;
-    syncSelectionToVisible();
     renderResourceList();
     updateFilterUrl();
 });
@@ -115,7 +116,6 @@ subjectFilter.addEventListener("change", () => {
     activeSubjectFilter = subjectFilter.value;
     activeChapterFilter = "";
     renderFilters();
-    syncSelectionToVisible();
     renderResourceList();
     updateFilterUrl();
 });
@@ -123,7 +123,6 @@ subjectFilter.addEventListener("change", () => {
 chapterFilter.addEventListener("change", () => {
     activeChapterFilter = chapterFilter.value;
     renderFilters();
-    syncSelectionToVisible();
     renderResourceList();
     updateFilterUrl();
 });
@@ -134,14 +133,37 @@ clearFiltersBtn.addEventListener("click", () => {
     activeChapterFilter = "";
     typeFilter.value = "";
     renderFilters();
-    syncSelectionToVisible();
     renderResourceList();
     updateFilterUrl();
 });
 
 resSearch.addEventListener("input", () => {
-    syncSelectionToVisible();
     renderResourceList();
+});
+
+// ── Cloud boot ───────────────────────────────────────────────
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "auth.html"; return; }
+
+    unsubSubjectsR = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.filter(s => s && s.id && s.name);
+        validateContext();
+        renderFilters();
+        renderResourceList();
+    });
+
+    unsubRes = await migrateAndSync(
+        "resources",
+        RESOURCES_STORAGE_KEY,
+        cloudRes => {
+            resources = cloudRes.map(normalizeResource).filter(Boolean);
+            validateContext();
+            renderFilters();
+            renderResourceList();
+            selectInitialResource();
+        },
+        normalizeResource
+    );
 });
 
 // ── Functions ────────────────────────────────────────────────
@@ -154,20 +176,6 @@ function toggleInputGroups(type) {
         fileInputGroup.classList.add("is-hidden");
         urlInputGroup.classList.remove("is-hidden");
     }
-}
-
-function loadSubjects() {
-    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-}
-
-function loadResources() {
-    const raw = localStorage.getItem(RESOURCES_STORAGE_KEY);
-    if (!raw) return [];
-    try {
-        const stored = JSON.parse(raw);
-        return Array.isArray(stored) ? stored.map(normalizeResource).filter(Boolean) : [];
-    } catch (e) { return []; }
 }
 
 function normalizeResource(res) {
@@ -186,7 +194,24 @@ function normalizeResource(res) {
 }
 
 function saveResources() {
-    localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
+    try {
+        localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
+    } catch(e) {}
+}
+
+function persistResource(res) {
+    saveResources();
+    return saveToCloud("resources", res).catch(err => {
+        console.error("Cloud save failed:", err);
+    });
+}
+
+function removeResource(id) {
+    resources = resources.filter(r => r.id !== id);
+    saveResources();
+    return deleteFromCloud("resources", id).catch(err => {
+        console.error("Cloud delete failed:", err);
+    });
 }
 
 function renderFilters() {
@@ -220,7 +245,7 @@ function renderResourceList() {
         if (activeSubjectFilter && r.subjectId !== activeSubjectFilter) return false;
         if (activeChapterFilter && r.chapterId !== activeChapterFilter) return false;
         return r.title.toLowerCase().includes(query);
-    }).sort((a,b) => b.updatedAt - a.updatedAt);
+    });
 
     resList.innerHTML = "";
     resResultCount.textContent = `${visible.length} resources`;
@@ -260,9 +285,7 @@ function selectResource(id) {
     renderEditorChapterSelect(res.chapterId, res.subjectId);
     
     hidePreview();
-    if (res.url && (res.type === "link" || res.type === "video")) {
-        // Could auto-open if it's a URL
-    } else if (res.fileName) {
+    if (res.fileName) {
         showReselectMessage(res.fileName);
     }
 
@@ -271,7 +294,6 @@ function selectResource(id) {
     deleteResBtn.hidden = false;
     resEditorTitle.textContent = "Edit resource";
     
-    // Hide AI tools when opening an existing resource until a new file is uploaded
     currentFile = null;
     resAiTools.classList.add("is-hidden");
     hideAiOutput();
@@ -358,26 +380,29 @@ function saveResourceFromForm(e) {
         updatedAt: Date.now()
     };
 
-    const idx = resources.findIndex(r => r.id === id);
-    if (idx > -1) resources[idx] = res;
-    else resources.push(res);
-
-    saveResources();
-    currentResourceId = id;
-    renderResourceList();
-    showSavedStatus();
+    persistResource(res).then(() => {
+        currentResourceId = id;
+        renderResourceList();
+        showSavedStatus();
+    });
 }
 
-function deleteCurrentResource() {
+async function deleteCurrentResource() {
     if (!currentResourceId) return;
-    if (!confirm("Delete this resource?")) return;
-    resources = resources.filter(r => r.id !== currentResourceId);
-    saveResources();
-    currentResourceId = null;
-    resForm.classList.add("is-hidden");
-    resEditorEmpty.classList.remove("is-hidden");
-    hidePreview();
-    renderResourceList();
+    
+    const confirmed = await window.floraConfirm(
+        "Delete Resource?",
+        "Delete this resource? This cannot be undone."
+    );
+    if (!confirmed) return;
+    
+    removeResource(currentResourceId).then(() => {
+        currentResourceId = null;
+        resForm.classList.add("is-hidden");
+        resEditorEmpty.classList.remove("is-hidden");
+        hidePreview();
+        renderResourceList();
+    });
 }
 
 function showSavedStatus() {
@@ -414,11 +439,7 @@ function renderEditorChapterSelect(selId, subId) {
 }
 
 function selectInitialResource() {
-    if (resources.length) selectResource(resources[0].id);
-}
-
-function syncSelectionToVisible() {
-    // Basic sync
+    if (resources.length && !currentResourceId) selectResource(resources[0].id);
 }
 
 function updateFilterUrl() {
@@ -433,13 +454,11 @@ function updateFilterUrl() {
 }
 
 function validateContext() {
-    if (!findSubject(activeSubjectFilter)) {
+    if (!subjects.find(s => s.id === activeSubjectFilter)) {
         activeSubjectFilter = "";
         activeChapterFilter = "";
     }
-    if (activeChapterFilter && !findChapter(activeSubjectFilter, activeChapterFilter)) {
-        activeChapterFilter = "";
-    }
+    renderFilters();
 }
 
 // ── AI Generation from PDF ───────────────────────────────────
@@ -452,10 +471,7 @@ async function extractTextFromPDF(file) {
                 const typedarray = new Uint8Array(this.result);
                 const pdf = await pdfjsLib.getDocument(typedarray).promise;
                 let fullText = "";
-                
-                // Read up to first 5 pages to avoid massive token usage
                 const numPages = Math.min(pdf.numPages, 5); 
-                
                 for (let i = 1; i <= numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
@@ -494,47 +510,28 @@ async function generateFromPdf(action) {
 
     try {
         const pdfText = await extractTextFromPDF(currentFile);
-        
-        if (!pdfText || pdfText.length < 20) {
-            throw new Error("Could not find enough readable text in this PDF. It might be scanned images.");
-        }
-
+        if (!pdfText || pdfText.length < 20) throw new Error("Could not find enough readable text in this PDF.");
         aiStatus.textContent = "AI is thinking...";
 
         let prompt;
-        let label;
-
-        if (action === "flashcards") {
-            prompt = window.buildFlashcardsPrompt(pdfText);
-            label = "Generated Flashcards";
-        } else if (action === "quiz") {
-            prompt = window.buildQuizPrompt(pdfText);
-            label = "Generated Quiz";
-        }
+        if (action === "flashcards") prompt = window.buildFlashcardsPrompt(pdfText);
+        else if (action === "quiz") prompt = window.buildQuizPrompt(pdfText);
 
         const result = await window.askGemini(prompt);
         aiStatus.textContent = "";
-
         pendingAiResult = { action, result };
 
         if (action === "flashcards") {
             const cards = window.parseJsonFromAi(result);
-            if (!Array.isArray(cards) || !cards.length) throw new Error("AI did not return valid flashcards.");
             const preview = cards.map((c, i) => `${i + 1}. Q: ${c.front}\n   A: ${c.back}`).join("\n\n");
-            showAiOutput(label + ` (${cards.length} cards)`, preview, true);
+            showAiOutput("Generated Flashcards", preview, true);
             pendingAiResult.parsed = cards;
         } else if (action === "quiz") {
             const questions = window.parseJsonFromAi(result);
-            if (!Array.isArray(questions) || !questions.length) throw new Error("AI did not return valid quiz questions.");
-            const letters = ["A", "B", "C", "D"];
-            const preview = questions.map((q, i) => {
-                const opts = q.options.map((o, j) => `   ${letters[j]}. ${o}${j === q.correctIndex ? " ✓" : ""}`).join("\n");
-                return `${i + 1}. ${q.prompt}\n${opts}`;
-            }).join("\n\n");
-            showAiOutput(label + ` (${questions.length} questions)`, preview, true);
+            const preview = questions.map((q, i) => `${i + 1}. ${q.prompt}`).join("\n\n");
+            showAiOutput("Generated Quiz", preview, true);
             pendingAiResult.parsed = questions;
         }
-
     } catch (error) {
         aiStatus.textContent = error.message;
         aiStatus.className = "res-ai-status error";
@@ -547,12 +544,8 @@ function showAiOutput(label, content, showSaveBtn) {
     aiOutputLabel.textContent = label;
     aiOutputContent.textContent = content;
     aiOutput.classList.remove("is-hidden");
-
-    if (showSaveBtn) {
-        aiOutputActions.classList.remove("is-hidden");
-    } else {
-        aiOutputActions.classList.add("is-hidden");
-    }
+    if (showSaveBtn) aiOutputActions.classList.remove("is-hidden");
+    else aiOutputActions.classList.add("is-hidden");
 }
 
 function hideAiOutput() {
@@ -564,20 +557,13 @@ function hideAiOutput() {
 
 function saveAiResult() {
     if (!pendingAiResult) return;
-
     const subjectId = subjectSelect.value || "";
     const chapterId = chapterSelect.value || "";
 
     if (pendingAiResult.action === "flashcards" && pendingAiResult.parsed) {
-        const FLASHCARDS_KEY = "flora-flashcards";
-        let flashcards = [];
-        try {
-            flashcards = JSON.parse(localStorage.getItem(FLASHCARDS_KEY)) || [];
-        } catch (e) { flashcards = []; }
-
         const now = Date.now();
         pendingAiResult.parsed.forEach(card => {
-            flashcards.push({
+            saveToCloud("flashcards", {
                 id: `fc-${now}-${Math.random().toString(16).slice(2)}`,
                 front: card.front,
                 back: card.back,
@@ -590,49 +576,27 @@ function saveAiResult() {
                 lastResult: null
             });
         });
-
-        localStorage.setItem(FLASHCARDS_KEY, JSON.stringify(flashcards));
-        aiStatus.textContent = `${pendingAiResult.parsed.length} flashcards saved to Flora! You can view them in the Flashcards section.`;
-        aiStatus.className = "res-ai-status";
-
+        aiStatus.textContent = "Saved to Flashcards!";
     } else if (pendingAiResult.action === "quiz" && pendingAiResult.parsed) {
-        const QUIZZES_KEY = "flora-quizzes";
-        let quizzes = [];
-        try {
-            quizzes = JSON.parse(localStorage.getItem(QUIZZES_KEY)) || [];
-        } catch (e) { quizzes = []; }
-
         const now = Date.now();
-        const resTitle = resTitleInput.value || "Untitled Document";
         const quiz = {
             id: `quiz-${now}-${Math.random().toString(16).slice(2)}`,
-            title: `AI Quiz: ${resTitle}`,
-            description: `Auto-generated from uploaded document`,
+            title: `AI Quiz: ${resTitleInput.value || "Untitled"}`,
+            description: `Auto-generated from document`,
             subjectId,
             chapterId,
-            questions: pendingAiResult.parsed.map((q, i) => ({
-                id: `q-${now}-${i}`,
-                prompt: q.prompt,
-                options: q.options,
-                correctIndex: q.correctIndex
-            })),
+            questions: pendingAiResult.parsed,
             createdAt: now,
             updatedAt: now,
             attemptCount: 0,
             lastAttemptAt: null
         };
-
-        quizzes.push(quiz);
-        localStorage.setItem(QUIZZES_KEY, JSON.stringify(quizzes));
-        aiStatus.textContent = `Quiz "${quiz.title}" saved! You can take it in the Quizzes section.`;
-        aiStatus.className = "res-ai-status";
+        saveToCloud("quizzes", quiz);
+        aiStatus.textContent = "Saved to Quizzes!";
     }
-
     hideAiOutput();
 }
 
-// Init
-validateContext();
-renderFilters();
-renderResourceList();
-selectInitialResource();
+function escapeHtml(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}

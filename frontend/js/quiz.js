@@ -67,10 +67,12 @@ let activeChapterFilter = activeSubjectFilter ? (pageContext.get("chapter") || "
 let pendingSubjectId = activeSubjectFilter || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
 let pendingChapterId = activeChapterFilter;
 
-let subjects = loadSubjects();
-let quizzes = loadQuizzes();
+let subjects = [];
+let quizzes = [];
 let currentQuizId = null;
 let draftQuestions = [];
+let unsubSubjectsQ = null;
+let unsubQuizzes = null;
 let saveStatusTimer = null;
 let takeQuizData = null;
 
@@ -132,10 +134,30 @@ questionDialog.addEventListener("click", event => {
     if (event.target === questionDialog) closeQuestionDialog();
 });
 
-validateContext();
-renderFilters();
-renderQuizList();
-selectInitialQuiz();
+// ── Cloud boot ───────────────────────────────────────────────
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "auth.html"; return; }
+
+    unsubSubjectsQ = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.filter(s => s && s.id && s.name);
+        validateContext();
+        renderFilters();
+        renderQuizList();
+    });
+
+    unsubQuizzes = await migrateAndSync(
+        "quizzes",
+        QUIZZES_STORAGE_KEY,
+        cloudQuizzes => {
+            quizzes = cloudQuizzes.map(normalizeQuiz).filter(Boolean);
+            validateContext();
+            renderFilters();
+            renderQuizList();
+            selectInitialQuiz();
+        },
+        normalizeQuiz
+    );
+});
 
 function loadSubjects() {
     const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
@@ -211,9 +233,23 @@ function saveQuizzes() {
         return true;
     } catch (error) {
         console.error("Could not save quizzes:", error);
-        quizFormError.textContent = "Flora could not save this quiz in your browser.";
         return false;
     }
+}
+
+function persistQuiz(quiz) {
+    saveQuizzes();
+    return saveToCloud("quizzes", quiz).catch(err => {
+        console.error("Cloud save failed for quiz:", err);
+    });
+}
+
+function removeQuiz(id) {
+    quizzes = quizzes.filter(q => q.id !== id);
+    saveQuizzes();
+    return deleteFromCloud("quizzes", id).catch(err => {
+        console.error("Cloud delete failed for quiz:", err);
+    });
 }
 
 function createId(prefix) {
@@ -560,8 +596,11 @@ function saveQuestionFromForm(event) {
     renderQuestions();
 }
 
-function deleteQuestion(question) {
-    const confirmed = confirm(`Delete this question?\n\n"${question.prompt}"`);
+async function deleteQuestion(question) {
+    const confirmed = await window.floraConfirm(
+        "Delete Question?",
+        `Delete this question?\n"${question.prompt}"`
+    );
     if (!confirmed) return;
     draftQuestions = draftQuestions.filter(item => item.id !== question.id);
     renderQuestions();
@@ -631,24 +670,29 @@ function saveQuizFromForm(event) {
 
     if (subjectId) localStorage.setItem(CURRENT_SUBJECT_KEY, subjectId);
     quizFormError.textContent = "";
-    if (!saveQuizzes()) return;
-    showSavedStatus();
-
-    if (getFilteredQuizzes().some(quiz => quiz.id === currentQuizId)) renderQuizList();
-    else syncSelectionToVisibleQuizzes();
+    const updatedQuiz = quizzes.find(q => q.id === currentQuizId);
+    persistQuiz(updatedQuiz).then(() => {
+        showSavedStatus();
+        if (getFilteredQuizzes().some(quiz => quiz.id === currentQuizId)) renderQuizList();
+        else syncSelectionToVisibleQuizzes();
+    });
 }
 
-function deleteCurrentQuiz() {
+async function deleteCurrentQuiz() {
     const quiz = quizzes.find(item => item.id === currentQuizId);
     if (!quiz) return;
-    const confirmed = confirm(`Delete "${quiz.title}"?\n\nThis also deletes its ${quiz.questions.length} questions. This cannot be undone.`);
+    
+    const confirmed = await window.floraConfirm(
+        "Delete Quiz?",
+        `Delete "${quiz.title}"?\nThis also deletes its ${quiz.questions.length} questions. This cannot be undone.`
+    );
     if (!confirmed) return;
 
-    quizzes = quizzes.filter(item => item.id !== quiz.id);
     currentQuizId = null;
-    saveQuizzes();
-    renderQuizList();
-    syncSelectionToVisibleQuizzes();
+    removeQuiz(quiz.id).then(() => {
+        renderQuizList();
+        syncSelectionToVisibleQuizzes();
+    });
 }
 
 function showSavedStatus() {
@@ -754,13 +798,14 @@ function navigateTakeQuiz(direction) {
     renderTakeQuizQuestion();
 }
 
-function submitQuiz() {
+async function submitQuiz() {
     if (!takeQuizData) return;
 
     const unanswered = takeQuizData.answers.filter(a => a === null).length;
     if (unanswered > 0) {
-        const proceed = confirm(
-            `You have ${unanswered} unanswered ${unanswered === 1 ? "question" : "questions"}.\n\nSubmit anyway?`
+        const proceed = await window.floraConfirm(
+            "Unanswered Questions",
+            `You have ${unanswered} unanswered ${unanswered === 1 ? "question" : "questions"}.\nSubmit anyway?`
         );
         if (!proceed) return;
     }
@@ -795,7 +840,7 @@ function submitQuiz() {
     if (!quiz.bestScore || percentage > quiz.bestScore) {
         quiz.bestScore = percentage;
     }
-    saveQuizzes();
+    persistQuiz(quiz);
     renderQuizList();
 
     showResults(takeQuizData, score, total, percentage);
@@ -885,4 +930,8 @@ function saveAttempt(attempt) {
     } catch (error) {
         console.error("Could not save quiz attempt:", error);
     }
+
+    saveToCloud("quiz_attempts", attempt).catch(err => {
+        console.error("Could not save attempt to cloud:", err);
+    });
 }

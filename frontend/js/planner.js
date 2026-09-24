@@ -23,46 +23,78 @@ const plannerEmpty = document.getElementById("planner-empty");
 const plannerSaveStatus = document.getElementById("planner-save-status");
 const deleteTaskBtn = document.getElementById("delete-task-btn");
 
-let subjects = loadSubjects();
-let tasks = loadTasks();
+let subjects = [];
+let tasks = [];
 let currentTaskId = null;
 let saveStatusTimer = null;
+let unsubTasks = null;
+let unsubSubjectsP = null;
 
 newTaskBtn.addEventListener("click", openNewTask);
 emptyNewTaskBtn.addEventListener("click", openNewTask);
 plannerForm.addEventListener("submit", saveTaskFromForm);
 deleteTaskBtn.addEventListener("click", deleteCurrentTask);
 plannerTaskSubject.addEventListener("change", () => renderChapterSelect(""));
-plannerSearch.addEventListener("input", () => { syncCurrentTask(); renderTaskList(); });
-plannerStatusFilter.addEventListener("change", () => { syncCurrentTask(); renderTaskList(); });
-plannerSubjectFilter.addEventListener("change", () => { renderFilterSubjectSelect(); syncCurrentTask(); renderTaskList(); });
+plannerSearch.addEventListener("input", () => { renderTaskList(); });
+plannerStatusFilter.addEventListener("change", () => { renderTaskList(); });
+plannerSubjectFilter.addEventListener("change", () => { renderFilterSubjectSelect(); renderTaskList(); });
 
-renderFilterSubjectSelect();
-renderTaskList();
-selectInitialTask();
+// ── Cloud boot ───────────────────────────────────────────────
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "auth.html"; return; }
 
-function loadSubjects() {
-    try {
-        const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-        const data = raw ? JSON.parse(raw) : [];
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        return [];
-    }
-}
+    unsubSubjectsP = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.filter(s => s && s.id && s.name);
+        renderFilterSubjectSelect();
+        renderTaskList();
+    });
 
-function loadTasks() {
-    try {
-        const raw = localStorage.getItem(PLANNER_STORAGE_KEY);
-        const data = raw ? JSON.parse(raw) : [];
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        return [];
-    }
+    unsubTasks = await migrateAndSync(
+        "planner",
+        PLANNER_STORAGE_KEY,
+        cloudTasks => {
+            tasks = cloudTasks.map(normalizeTask).filter(Boolean);
+            renderTaskList();
+            selectInitialTask();
+        },
+        normalizeTask
+    );
+});
+
+function normalizeTask(task) {
+    if (!task || !task.id) return null;
+    return {
+        id: String(task.id),
+        title: String(task.title || "Untitled Task").trim(),
+        notes: String(task.notes || "").trim(),
+        subjectId: task.subjectId || "",
+        chapterId: task.chapterId || "",
+        dueDate: task.dueDate || "",
+        priority: task.priority || "medium",
+        completed: Boolean(task.completed),
+        updatedAt: Number(task.updatedAt) || Date.now()
+    };
 }
 
 function saveTasks() {
-    localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(tasks));
+    try {
+        localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(tasks));
+    } catch(e) {}
+}
+
+function persistTask(task) {
+    saveTasks();
+    return saveToCloud("planner", task).catch(err => {
+        console.error("Cloud save failed:", err);
+    });
+}
+
+function removeTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    return deleteFromCloud("planner", id).catch(err => {
+        console.error("Cloud delete failed:", err);
+    });
 }
 
 function createId() {
@@ -248,22 +280,27 @@ function saveTaskFromForm(event) {
     }
 
     currentTaskId = taskData.id;
-    saveTasks();
-    showSaveStatus();
-    renderTaskList();
+    persistTask(taskData).then(() => {
+        showSaveStatus();
+        renderTaskList();
+    });
 }
 
-function deleteCurrentTask() {
+async function deleteCurrentTask() {
     const task = tasks.find(item => item.id === currentTaskId);
     if (!task) return;
-    const confirmed = confirm(`Delete "${task.title}"? This cannot be undone.`);
+    
+    const confirmed = await window.floraConfirm(
+        "Delete Task?",
+        `Delete "${task.title}"? This cannot be undone.`
+    );
     if (!confirmed) return;
 
-    tasks = tasks.filter(item => item.id !== task.id);
-    saveTasks();
     currentTaskId = null;
-    renderTaskList();
-    syncCurrentTask();
+    removeTask(task.id).then(() => {
+        renderTaskList();
+        syncCurrentTask();
+    });
 }
 
 function showSaveStatus() {

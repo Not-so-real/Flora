@@ -1,56 +1,51 @@
-const PROGRESS_KEYS = {
-    subjects: "flora-subjects",
-    notes: "flora-notes",
-    flashcards: "flora-flashcards",
-    quizzes: "flora-quizzes",
-    attempts: "flora-quiz-attempts",
-    resources: "flora-resources"
-};
+// ============================================================
+//  Flora — Progress Page
+//  Pulls all data from Firestore for real analytics.
+// ============================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-    renderProgressPage();
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "auth.html"; return; }
+    await renderProgressPage();
 });
 
-function getStored(key) {
+async function renderProgressPage() {
     try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : [];
+        const [subjects, notes, flashcards, quizzes, attempts, resources] = await Promise.all([
+            fetchFromCloud("subjects"),
+            fetchFromCloud("notes"),
+            fetchFromCloud("flashcards"),
+            fetchFromCloud("quizzes"),
+            fetchFromCloud("quiz_attempts"),
+            fetchFromCloud("resources")
+        ]);
+
+        document.getElementById("progress-streak").textContent = calculateStreak(notes, attempts, flashcards);
+        document.getElementById("progress-notes").textContent = notes.length;
+        document.getElementById("progress-reviews").textContent = flashcards.reduce((sum, card) => sum + (Number(card.reviewCount) || 0), 0);
+        document.getElementById("progress-accuracy").textContent = `${calculateAverageAccuracy(attempts)}%`;
+        document.getElementById("progress-chapters").textContent = `${calculateCompletion(subjects)}%`;
+        document.getElementById("progress-resources").textContent = resources.length;
+
+        renderSubjectBreakdown(subjects);
+        renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, resources);
     } catch (error) {
-        return [];
+        console.error("Could not load progress from cloud:", error);
     }
-}
-
-function renderProgressPage() {
-    const subjects = getStored(PROGRESS_KEYS.subjects);
-    const notes = getStored(PROGRESS_KEYS.notes);
-    const flashcards = getStored(PROGRESS_KEYS.flashcards);
-    const quizzes = getStored(PROGRESS_KEYS.quizzes);
-    const attempts = getStored(PROGRESS_KEYS.attempts);
-    const resources = getStored(PROGRESS_KEYS.resources);
-
-    document.getElementById("progress-streak").textContent = calculateStreak(notes, attempts, flashcards);
-    document.getElementById("progress-notes").textContent = notes.length;
-    document.getElementById("progress-reviews").textContent = flashcards.reduce((sum, card) => sum + (card.reviewCount || 0), 0);
-    document.getElementById("progress-accuracy").textContent = `${calculateAverageAccuracy(attempts)}%`;
-    document.getElementById("progress-chapters").textContent = `${calculateCompletion(subjects)}%`;
-    document.getElementById("progress-resources").textContent = resources.length;
-
-    renderSubjectBreakdown(subjects);
-    renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, resources);
 }
 
 function calculateAverageAccuracy(attempts) {
     if (!attempts.length) return 0;
-    const total = attempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0);
+    const total = attempts.reduce((sum, attempt) => sum + (Number(attempt.percentage) || 0), 0);
     return Math.round(total / attempts.length);
 }
 
 function calculateCompletion(subjects) {
     if (!subjects.length) return 0;
     const ratios = subjects.map(subject => {
-        if (!subject.chapters || !subject.chapters.length) return 0;
-        const completed = subject.chapters.filter(ch => ch.completed).length;
-        return completed / subject.chapters.length;
+        const chapters = Array.isArray(subject.chapters) ? subject.chapters : [];
+        if (!chapters.length) return 0;
+        const completed = chapters.filter(ch => ch.completed).length;
+        return completed / chapters.length;
     });
     const total = ratios.reduce((sum, ratio) => sum + ratio, 0);
     return Math.round((total / subjects.length) * 100);
@@ -89,7 +84,7 @@ function calculateStreak(notes, attempts, flashcards) {
 }
 
 function dateKey(timestamp) {
-    const d = new Date(timestamp);
+    const d = new Date(Number(timestamp) || timestamp);
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
@@ -103,14 +98,15 @@ function renderSubjectBreakdown(subjects) {
     }
 
     subjects.forEach(subject => {
-        const total = Array.isArray(subject.chapters) ? subject.chapters.length : 0;
-        const completed = total ? subject.chapters.filter(ch => ch.completed).length : 0;
+        const chapters = Array.isArray(subject.chapters) ? subject.chapters : [];
+        const total = chapters.length;
+        const completed = total ? chapters.filter(ch => ch.completed).length : 0;
         const percent = total ? Math.round((completed / total) * 100) : 0;
 
         const item = document.createElement("article");
         item.className = "subject-progress-item";
         item.innerHTML = `
-            <h3>${subject.name}</h3>
+            <h3>${escapeHtml(subject.name || "Untitled")}</h3>
             <p>${completed} of ${total} chapters completed · ${percent}%</p>
             <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
         `;
@@ -130,7 +126,7 @@ function renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, re
             events.push({
                 title: `Updated note: ${note.title || "Untitled Note"}`,
                 detail: note.subjectId ? `Subject: ${subjectMap.get(note.subjectId) || "Unknown"}` : "General note",
-                time: note.updatedAt
+                time: Number(note.updatedAt)
             });
         }
     });
@@ -140,7 +136,7 @@ function renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, re
             events.push({
                 title: `Reviewed flashcard`,
                 detail: card.front || "Flashcard",
-                time: card.lastReviewedAt
+                time: Number(card.lastReviewedAt)
             });
         }
     });
@@ -149,8 +145,8 @@ function renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, re
         if (quiz.updatedAt) {
             events.push({
                 title: `Edited quiz: ${quiz.title || "Untitled Quiz"}`,
-                detail: `${quiz.questions?.length || 0} questions`,
-                time: quiz.updatedAt
+                detail: `${(quiz.questions && quiz.questions.length) || 0} questions`,
+                time: Number(quiz.updatedAt)
             });
         }
     });
@@ -160,7 +156,7 @@ function renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, re
             events.push({
                 title: `Completed a quiz attempt`,
                 detail: `${attempt.score}/${attempt.totalQuestions} · ${attempt.percentage}%`,
-                time: attempt.completedAt
+                time: Number(attempt.completedAt)
             });
         }
     });
@@ -170,7 +166,7 @@ function renderRecentActivity(subjects, notes, flashcards, quizzes, attempts, re
             events.push({
                 title: `Saved resource: ${resource.title || "Untitled Resource"}`,
                 detail: resource.type || "Resource",
-                time: resource.updatedAt
+                time: Number(resource.updatedAt)
             });
         }
     });
@@ -210,6 +206,6 @@ function escapeHtml(value) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
+        .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }

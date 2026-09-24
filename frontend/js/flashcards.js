@@ -50,8 +50,8 @@ let activeChapterFilter = activeSubjectFilter ? (pageContext.get("chapter") || "
 let pendingSubjectId = activeSubjectFilter || localStorage.getItem(CURRENT_SUBJECT_KEY) || "";
 let pendingChapterId = activeChapterFilter;
 
-let subjects = loadSubjects();
-let flashcards = loadFlashcards();
+let subjects = [];
+let flashcards = [];
 let currentFlashcardId = null;
 let saveStatusTimer = null;
 let studyCardIds = [];
@@ -59,6 +59,8 @@ let studyIndex = 0;
 let studyAnswerRevealed = false;
 let studyKnownCount = 0;
 let studyReviewCount = 0;
+let unsubFlashcards = null;
+let unsubSubjectsFC = null;
 
 newFlashcardBtn.addEventListener("click", openNewFlashcard);
 emptyNewFlashcardBtn.addEventListener("click", openNewFlashcard);
@@ -110,38 +112,30 @@ flashcardSearch.addEventListener("input", () => {
     renderFlashcards();
 });
 
-validateContext();
-renderFilters();
-renderFlashcards();
-selectInitialFlashcard();
+// ── Cloud boot ───────────────────────────────────────────────
+firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { window.location.href = "auth.html"; return; }
 
-function loadSubjects() {
-    const raw = localStorage.getItem(SUBJECTS_STORAGE_KEY);
-    if (!raw) return [];
+    unsubSubjectsFC = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.filter(s => s && s.id && s.name);
+        validateContext();
+        renderFilters();
+        renderFlashcards();
+    });
 
-    try {
-        const storedSubjects = JSON.parse(raw);
-        return Array.isArray(storedSubjects) ? storedSubjects : [];
-    } catch (error) {
-        console.error("Could not load subjects for flashcards:", error);
-        return [];
-    }
-}
-
-function loadFlashcards() {
-    const raw = localStorage.getItem(FLASHCARDS_STORAGE_KEY);
-    if (!raw) return [];
-
-    try {
-        const storedFlashcards = JSON.parse(raw);
-        if (!Array.isArray(storedFlashcards)) return [];
-
-        return storedFlashcards.map(normalizeFlashcard).filter(Boolean);
-    } catch (error) {
-        console.error("Could not load flashcards:", error);
-        return [];
-    }
-}
+    unsubFlashcards = await migrateAndSync(
+        "flashcards",
+        FLASHCARDS_STORAGE_KEY,
+        cloudCards => {
+            flashcards = cloudCards.map(normalizeFlashcard).filter(Boolean);
+            validateContext();
+            renderFilters();
+            renderFlashcards();
+            selectInitialFlashcard();
+        },
+        normalizeFlashcard
+    );
+});
 
 function normalizeFlashcard(card) {
     if (!card || typeof card !== "object" || !card.id) return null;
@@ -172,8 +166,22 @@ function saveFlashcards() {
         localStorage.setItem(FLASHCARDS_STORAGE_KEY, JSON.stringify(flashcards));
     } catch (error) {
         console.error("Could not save flashcards:", error);
-        formError.textContent = "Flora could not save this card in your browser.";
     }
+}
+
+function persistFlashcard(card) {
+    saveFlashcards();
+    return saveToCloud("flashcards", card).catch(err => {
+        console.error("Cloud save failed:", err);
+    });
+}
+
+function removeFlashcard(id) {
+    flashcards = flashcards.filter(c => c.id !== id);
+    saveFlashcards();
+    return deleteFromCloud("flashcards", id).catch(err => {
+        console.error("Cloud delete failed:", err);
+    });
 }
 
 function createId() {
@@ -502,7 +510,7 @@ function rateStudyCard(result) {
         studyReviewCount += 1;
     }
 
-    saveFlashcards();
+    persistFlashcard(card);
     studyIndex += 1;
     renderFlashcards();
 
@@ -585,29 +593,34 @@ function saveFlashcardFromForm(event) {
         localStorage.setItem(CURRENT_SUBJECT_KEY, subjectId);
     }
 
+    const savedCard = flashcards.find(c => c.id === currentFlashcardId);
     formError.textContent = "";
-    saveFlashcards();
-    showSavedStatus();
 
-    if (getFilteredFlashcards().some(card => card.id === currentFlashcardId)) {
-        renderFlashcards();
-    } else {
-        syncSelectionToVisibleCards();
-    }
+    persistFlashcard(savedCard).then(() => {
+        showSavedStatus();
+        if (getFilteredFlashcards().some(card => card.id === currentFlashcardId)) {
+            renderFlashcards();
+        } else {
+            syncSelectionToVisibleCards();
+        }
+    });
 }
 
-function deleteCurrentFlashcard() {
+async function deleteCurrentFlashcard() {
     const card = flashcards.find(item => item.id === currentFlashcardId);
     if (!card) return;
 
-    const confirmed = confirm(`Delete this flashcard?\n\n"${card.front}"\n\nThis cannot be undone.`);
+    const confirmed = await window.floraConfirm(
+        "Delete Flashcard?",
+        `Delete this flashcard?\n"${card.front}"\n\nThis cannot be undone.`
+    );
     if (!confirmed) return;
 
-    flashcards = flashcards.filter(item => item.id !== card.id);
     currentFlashcardId = null;
-    saveFlashcards();
-    renderFlashcards();
-    syncSelectionToVisibleCards();
+    removeFlashcard(card.id).then(() => {
+        renderFlashcards();
+        syncSelectionToVisibleCards();
+    });
 }
 
 function showSavedStatus() {

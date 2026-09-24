@@ -496,9 +496,10 @@ function toggleChapterCompletion(chapter) {
     persistSubject(currentSubject).then(() => renderSubject());
 }
 
-function deleteChapter(chapter) {
-    const confirmed = confirm(
-        `Delete "${chapter.name}"?\n\nThis cannot be undone.`
+async function deleteChapter(chapter) {
+    const confirmed = await window.floraConfirm(
+        "Delete Chapter?",
+        `Delete "${chapter.name}"?\nThis cannot be undone.`
     );
     if (!confirmed) return;
 

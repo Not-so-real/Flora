@@ -350,9 +350,10 @@ function saveSubjectFromForm(event) {
         });
 }
 
-function deleteSubject(subject) {
-    const confirmed = confirm(
-        `Delete "${subject.name}"?\n\nThis removes the subject from your dashboard. This cannot be undone.`
+async function deleteSubject(subject) {
+    const confirmed = await window.floraConfirm(
+        "Delete Subject?",
+        `Delete "${subject.name}"?\nThis removes the subject from your dashboard. This cannot be undone.`
     );
 
     if (!confirmed) return;

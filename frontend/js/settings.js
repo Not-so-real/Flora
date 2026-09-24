@@ -140,8 +140,13 @@ aiSettingsForm.addEventListener("submit", event => {
 });
 
 // ── 6. Clear AI Settings ─────────────────────────────────────
-clearAiSettingsBtn.addEventListener("click", () => {
-    if (!confirm("Clear your saved OpenRouter API key and model?")) return;
+clearAiSettingsBtn.addEventListener("click", async () => {
+    const confirmed = await window.floraConfirm(
+        "Clear AI Settings?",
+        "Clear your saved OpenRouter API key and model?"
+    );
+    if (!confirmed) return;
+    
     localStorage.removeItem("flora-ai-key");
     localStorage.removeItem("flora-ai-model");
     aiKeyInput.value = "";
@@ -151,8 +156,12 @@ clearAiSettingsBtn.addEventListener("click", () => {
 });
 
 // ── 7. Clear Local Study Data ────────────────────────────────
-clearLocalDataBtn.addEventListener("click", () => {
-    if (!confirm("This will erase ALL your local Flora notes, subjects, flashcards, quizzes, attempts, resources, and planner tasks.\n\nThis cannot be undone. Continue?")) return;
+clearLocalDataBtn.addEventListener("click", async () => {
+    const confirmed = await window.floraConfirm(
+        "Clear Local Data?",
+        "This will erase ALL your local Flora study data.\nThis cannot be undone. Continue?"
+    );
+    if (!confirmed) return;
 
     LOCAL_KEYS.forEach(key => localStorage.removeItem(key));
     storageStatus.textContent = "Local study data cleared.";

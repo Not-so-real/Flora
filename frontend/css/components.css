@@ -95,6 +95,95 @@
     outline-offset: 2px;
 }
 
+/* ── Global Confirm Dialog ── */
+.flora-confirm-dialog {
+    width: min(420px, calc(100% - 32px));
+    padding: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.flora-confirm-dialog::backdrop {
+    background: rgba(17, 24, 39, 0.44);
+    backdrop-filter: blur(3px);
+}
+
+.flora-confirm-dialog[open] {
+    animation: scaleIn var(--animate-smooth) var(--animate-bounce);
+}
+
+.flora-confirm-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #FEE2E2;
+    color: var(--color-danger);
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.flora-confirm-title {
+    margin: 0 0 10px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.flora-confirm-message {
+    margin: 0 0 24px;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.flora-confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.flora-confirm-cancel {
+    padding: 11px 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.flora-confirm-cancel:hover {
+    background: var(--color-background);
+}
+
+.flora-confirm-delete {
+    padding: 11px 20px;
+    border: none;
+    border-radius: 12px;
+    background: var(--color-danger);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.flora-confirm-delete:hover {
+    background: #DC2626;
+    transform: translateY(-1px);
+}
+
 /* ── Back Button ── */
 .back-btn {
     display: inline-flex;

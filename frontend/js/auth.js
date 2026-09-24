@@ -116,11 +116,18 @@ if (auth) {
                 window.location.href = "dashboard.html";
             }
             
-            // Optional: Update UI on other pages (like header names)
-            const profileName = document.querySelector(".sidebar-profile h4, .notes-nav-avatar, .res-avatar, .quiz-avatar, .flashcards-avatar");
+            // Update UI on other pages (like header names and avatars)
+            const profileName = document.querySelector(".sidebar-profile h4");
             if (profileName && user.displayName) {
-                if (profileName.tagName === "H4") profileName.textContent = user.displayName;
-                else profileName.textContent = user.displayName.charAt(0).toUpperCase();
+                profileName.textContent = user.displayName;
+            }
+
+            const avatarIcons = document.querySelectorAll(".notes-nav-avatar, .res-avatar, .quiz-avatar, .flashcards-avatar");
+            if (user.displayName) {
+                const initial = user.displayName.charAt(0).toUpperCase();
+                avatarIcons.forEach(icon => {
+                    icon.textContent = initial;
+                });
             }
         } else {
             // User is logged out
@@ -142,5 +149,55 @@ window.floraLogout = function() {
         window.location.href = "index.html";
     }).catch((error) => {
         console.error("Logout Error:", error);
+    });
+};
+
+// ── Global Custom Confirm Dialog ────────────────────────────
+window.floraConfirm = function(title, message) {
+    return new Promise((resolve) => {
+        let dialog = document.getElementById("flora-global-confirm");
+        if (!dialog) {
+            dialog = document.createElement("dialog");
+            dialog.id = "flora-global-confirm";
+            dialog.className = "flora-confirm-dialog";
+            dialog.innerHTML = `
+                <div class="flora-confirm-icon">!</div>
+                <h2 class="flora-confirm-title"></h2>
+                <p class="flora-confirm-message"></p>
+                <div class="flora-confirm-actions">
+                    <button type="button" class="flora-confirm-cancel" id="flora-confirm-cancel-btn">Cancel</button>
+                    <button type="button" class="flora-confirm-delete" id="flora-confirm-delete-btn">Delete</button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+        }
+
+        dialog.querySelector(".flora-confirm-title").textContent = title || "Are you sure?";
+        dialog.querySelector(".flora-confirm-message").textContent = message || "This action cannot be undone.";
+
+        const cancelBtn = dialog.querySelector("#flora-confirm-cancel-btn");
+        const deleteBtn = dialog.querySelector("#flora-confirm-delete-btn");
+
+        const cleanup = () => {
+            cancelBtn.removeEventListener("click", onCancel);
+            deleteBtn.removeEventListener("click", onDelete);
+            dialog.close();
+        };
+
+        const onCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const onDelete = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        cancelBtn.addEventListener("click", onCancel);
+        deleteBtn.addEventListener("click", onDelete);
+
+        dialog.showModal();
+        deleteBtn.focus();
     });
 };

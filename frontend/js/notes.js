@@ -717,14 +717,15 @@ function createFolderFromInput() {
         });
 }
 
-function deleteFolder(folder) {
+async function deleteFolder(folder) {
     if (folder.id === DEFAULT_FOLDER.id) {
         alert("You can't delete the default folder.");
         return;
     }
 
-    const confirmed = confirm(
-        `Delete folder "${folder.name}"?\n\nNotes inside will move to "${DEFAULT_FOLDER.name}".`
+    const confirmed = await window.floraConfirm(
+        "Delete Folder?",
+        `Delete folder "${folder.name}"?\nNotes inside will move to "${DEFAULT_FOLDER.name}".`
     );
     if (!confirmed) return;
 
@@ -1138,11 +1139,12 @@ function renderNoteCard(note) {
 
     // ── Delete handler ────────────────────────────────────
     const deleteBtn = noteCard.querySelector(".delete-note-btn");
-    deleteBtn.addEventListener("click", event => {
+    deleteBtn.addEventListener("click", async event => {
         event.stopPropagation();
 
-        const confirmed = confirm(
-            `Delete "${note.title}"?\n\nThis cannot be undone.`
+        const confirmed = await window.floraConfirm(
+            "Delete Note?",
+            `Delete "${note.title}"?\nThis cannot be undone.`
         );
         if (!confirmed) return;
 
