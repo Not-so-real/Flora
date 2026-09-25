@@ -35,10 +35,15 @@ const newChapterBtn = document.getElementById("new-chapter-btn");
 
 let subjects = [];
 let currentSubject = null;
-const notes = loadNotes();
-const flashcards = loadFlashcards();
-const quizzes = loadQuizzes();
-const studyResources = loadStudyResources();
+let notes = [];
+let flashcards = [];
+let quizzes = [];
+let studyResources = [];
+let unsubSubjectsPage = null;
+let unsubNotesPage = null;
+let unsubFlashcardsPage = null;
+let unsubQuizzesPage = null;
+let unsubResourcesPage = null;
 
 newChapterBtn.addEventListener("click", () => openChapterDialog());
 chapterDialogClose.addEventListener("click", closeChapterDialog);
@@ -51,16 +56,20 @@ chapterDialog.addEventListener("click", event => {
     }
 });
 
-// ── Load subjects from Firestore live ────────────────────────
+// ── Load subject workspace data from Firestore live ──────────
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "auth.html";
         return;
     }
 
-    onCloudUpdate("subjects", cloudSubjects => {
-        subjects = cloudSubjects.map(normalizeSubject).filter(Boolean);
+    if (unsubSubjectsPage) unsubSubjectsPage();
+    if (unsubNotesPage) unsubNotesPage();
+    if (unsubFlashcardsPage) unsubFlashcardsPage();
+    if (unsubQuizzesPage) unsubQuizzesPage();
+    if (unsubResourcesPage) unsubResourcesPage();
 
+    const resolveCurrentSubject = () => {
         const queryId = new URLSearchParams(window.location.search).get("id");
         const storedId = localStorage.getItem(CURRENT_SUBJECT_KEY);
         const requestedId = queryId || storedId;
@@ -72,49 +81,36 @@ firebase.auth().onAuthStateChanged(user => {
         }
 
         renderSubject();
+    };
+
+    unsubSubjectsPage = onCloudUpdate("subjects", cloudSubjects => {
+        subjects = cloudSubjects.map(normalizeSubject).filter(Boolean);
+        resolveCurrentSubject();
+    });
+
+    unsubNotesPage = onCloudUpdate("notes", cloudNotes => {
+        notes = Array.isArray(cloudNotes) ? cloudNotes : [];
+        if (currentSubject) renderSubject();
+    });
+
+    unsubFlashcardsPage = onCloudUpdate("flashcards", cloudFlashcards => {
+        flashcards = Array.isArray(cloudFlashcards) ? cloudFlashcards : [];
+        if (currentSubject) renderSubject();
+    });
+
+    unsubQuizzesPage = onCloudUpdate("quizzes", cloudQuizzes => {
+        quizzes = Array.isArray(cloudQuizzes) ? cloudQuizzes : [];
+        if (currentSubject) renderSubject();
+    });
+
+    unsubResourcesPage = onCloudUpdate("resources", cloudResources => {
+        studyResources = Array.isArray(cloudResources) ? cloudResources : [];
+        if (currentSubject) renderSubject();
     });
 });
 
 // getCurrentSubject is now handled inline in the auth listener above.
 
-function loadNotes() {
-    const raw = localStorage.getItem("flora-notes");
-    if (!raw) return [];
-
-    try {
-        const storedNotes = JSON.parse(raw);
-        return Array.isArray(storedNotes) ? storedNotes : [];
-    } catch (error) {
-        console.error("Could not load notes for chapter counts:", error);
-        return [];
-    }
-}
-
-function loadFlashcards() {
-    const raw = localStorage.getItem("flora-flashcards");
-    if (!raw) return [];
-
-    try {
-        const storedFlashcards = JSON.parse(raw);
-        return Array.isArray(storedFlashcards) ? storedFlashcards : [];
-    } catch (error) {
-        console.error("Could not load flashcards for counts:", error);
-        return [];
-    }
-}
-
-function loadQuizzes() {
-    const raw = localStorage.getItem("flora-quizzes");
-    if (!raw) return [];
-
-    try {
-        const storedQuizzes = JSON.parse(raw);
-        return Array.isArray(storedQuizzes) ? storedQuizzes : [];
-    } catch (error) {
-        console.error("Could not load quizzes for counts:", error);
-        return [];
-    }
-}
 
 function countSubjectNotes(subjectId) {
     return notes.filter(note => note.subjectId === subjectId).length;
@@ -146,19 +142,6 @@ function countChapterQuizzes(subjectId, chapterId) {
     return quizzes.filter(quiz =>
         quiz.subjectId === subjectId && quiz.chapterId === chapterId
     ).length;
-}
-
-function loadStudyResources() {
-    const raw = localStorage.getItem("flora-resources");
-    if (!raw) return [];
-
-    try {
-        const stored = JSON.parse(raw);
-        return Array.isArray(stored) ? stored : [];
-    } catch (error) {
-        console.error("Could not load resources for counts:", error);
-        return [];
-    }
 }
 
 function countSubjectResources(subjectId) {
@@ -288,8 +271,12 @@ function renderSubject() {
     if (!currentSubject) {
         subjectHeading.textContent = "Subject not found";
         subjectBadge.textContent = "No subject selected";
+        subjectIntro.textContent = "Create a subject on the dashboard to begin.";
         document.title = "Flora | Subject not found";
         chaptersList.innerHTML = "";
+        progressLabels.forEach(label => label.textContent = "0%");
+        progressFills.forEach(fill => fill.style.width = "0%");
+        progressSummary.textContent = "No chapters have been added yet.";
         return;
     }
 

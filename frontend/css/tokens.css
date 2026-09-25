@@ -1,47 +1,86 @@
+/* ==========================================
+   FLORA — Design Tokens
+   A study journal, not a dashboard: warm paper,
+   deep canopy green, ochre highlights.
+========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,380;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
 
   /* ==========================================
-     Brand Colors
+     Palette — canopy green, ochre, warm paper
   ========================================== */
 
-  --color-primary: #2563EB;
-  --color-primary-hover: #1D4ED8;
-  --color-primary-light: #DBEAFE;
+  --color-primary: #2F6844;        /* Canopy — deep leaf green */
+  --color-primary-hover: #234F34;
+  --color-primary-light: #E7F0E4;  /* Pale sage tint */
+  --color-primary-light-strong: #D6E5D1;
 
-  --color-background: #FAFAFA;
+  --color-background: #F5F3EA;     /* Warm sage-paper */
   --color-surface: #FFFFFF;
 
-  --color-text: #111827;
-  --color-text-secondary: #6B7280;
+  --color-text: #23281F;           /* Botanical ink */
+  --color-text-secondary: #6B7364; /* Muted moss grey */
 
-  --color-border: #E5E7EB;
+  --color-border: #E1DFD1;         /* Warm sand-grey */
 
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
+  --color-success: #3F8F5F;
+  --color-success-bg: #E4F3E8;
+  --color-success-text: #276B45;
 
-  /* Border Radius */
+  --color-warning: #B8842E;        /* Ochre */
+  --color-warning-bg: #FBF0DC;
+  --color-warning-text: #7A5518;
+  --color-warning-border: #E8C878;
 
-  --radius-button: 14px;
-  --radius-input: 14px;
-  --radius-card: 20px;
-  --radius-section: 28px;
-  --radius-logo: 18px;
+  --color-danger: #B3462F;         /* Brick */
+  --color-danger-bg: #F7E9E4;
+  --color-danger-text: #8C3623;
+  --color-danger-border: #E8C4B8;
+  --color-danger-hover: #96381F;
+
+  /* Categorical accents (resource types) */
+  --color-accent-teal: #2A6F7E;
+  --color-accent-teal-bg: #DCEEF0;
+
+  /* ==========================================
+     Type
+  ========================================== */
+
+  --font-heading: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-wordmark: 'Unbounded', sans-serif; /* reserved for the Flora mark only */
+
+  --font-main: var(--font-body); /* legacy alias used across page stylesheets */
+
+  /* ==========================================
+     Radius — a little less bubble, a little more journal
+  ========================================== */
+
+  --radius-button: 10px;
+  --radius-input: 10px;
+  --radius-card: 16px;
+  --radius-section: 22px;
+  --radius-logo: 12px;
   --radius-pill: 999px;
 
-  /* Shadows */
+  /* ==========================================
+     Shadows — soft, warm-tinted, never grey
+  ========================================== */
 
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.05);
-  --shadow-md: 0 8px 30px rgba(0,0,0,.08);
-  --shadow-lg: 0 14px 40px rgba(0,0,0,.12);
+  --shadow-sm: 0 2px 10px rgba(35, 40, 31, 0.05);
+  --shadow-md: 0 10px 28px rgba(35, 40, 31, 0.08);
+  --shadow-lg: 0 22px 48px rgba(35, 40, 31, 0.13);
 
-  /* Motion */
+  /* ==========================================
+     Motion (layout motion is handed to Anime.js —
+     keep color/border transitions fast, nothing else)
+  ========================================== */
 
   --transition-fast: 150ms ease;
-  --transition-smooth: 250ms cubic-bezier(0.4,0,0.2,1);
-  --transition-slow: 400ms ease;
-
-  /* Animation durations */
+  --transition-smooth: 0ms;
+  --transition-slow: 0ms;
 
   --animate-fast: 150ms;
   --animate-smooth: 250ms;

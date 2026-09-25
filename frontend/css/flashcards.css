@@ -8,7 +8,7 @@ body {
     max-width: 100%;
     overflow-x: hidden;
     color: var(--color-text);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-main);
 }
 
 button,
@@ -53,8 +53,8 @@ a {
 
 .flashcards-logo {
     color: var(--color-primary);
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 500;
 }
 
 .flashcards-nav-links {
@@ -207,7 +207,7 @@ a {
 .flashcard-form select:focus,
 .flashcard-form textarea:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
+    box-shadow: 0 0 0 3px rgba(47, 104, 68, 0.09);
 }
 
 .flashcard-filters select:disabled,
@@ -327,10 +327,10 @@ a {
 .flashcard-eyebrow {
     margin: 0 0 5px;
     color: var(--color-primary);
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 .flashcard-workspace-header h2 {
@@ -353,8 +353,8 @@ a {
 }
 
 .flashcard-save-status.saved {
-    color: #15803D;
-    background: #DCFCE7;
+    color: #276B45;
+    background: #E4F3E8;
 }
 
 .flashcard-form {
@@ -442,8 +442,8 @@ a {
 }
 
 .flashcard-delete-btn:hover {
-    border-color: #FECACA;
-    background: #FEF2F2;
+    border-color: #E8C4B8;
+    background: #FBEEE9;
 }
 
 .flashcard-editor-empty {
@@ -628,24 +628,24 @@ a {
 }
 
 .review-again-btn {
-    color: #B45309;
-    border: 1px solid #FCD34D;
-    background: #FFFBEB;
+    color: #7A5518;
+    border: 1px solid #E8C878;
+    background: #FBF3DE;
 }
 
 .review-again-btn:hover {
-    background: #FEF3C7;
+    background: #FBF0DC;
     transform: translateY(-1px);
 }
 
 .know-it-btn {
-    color: #15803D;
-    border: 1px solid #86EFAC;
-    background: #F0FDF4;
+    color: #276B45;
+    border: 1px solid #BFE0C7;
+    background: #EAF5EC;
 }
 
 .know-it-btn:hover {
-    background: #DCFCE7;
+    background: #E4F3E8;
     transform: translateY(-1px);
 }
 
@@ -665,7 +665,7 @@ a {
     background: var(--color-primary);
     font-size: 1.3rem;
     font-weight: 800;
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 12px 30px rgba(47, 104, 68, 0.25);
 }
 
 .study-summary > p:not(.flashcard-eyebrow) {
@@ -715,7 +715,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, 0.22);
+    outline: 3px solid rgba(47, 104, 68, 0.22);
     outline-offset: 2px;
 }
 

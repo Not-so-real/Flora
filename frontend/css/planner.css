@@ -4,7 +4,7 @@ html, body {
     max-width: 100%;
     overflow-x: hidden;
     color: var(--color-text);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-main);
 }
 button, input, select, textarea { font: inherit; }
 .planner-page {
@@ -19,10 +19,10 @@ button, input, select, textarea { font: inherit; }
 .planner-eyebrow {
     margin: 0 0 8px;
     color: var(--color-primary);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 .planner-eyebrow.small { margin-bottom: 6px; }
 .planner-header h1 {
@@ -88,7 +88,7 @@ button, input, select, textarea { font: inherit; }
 .planner-filters select:focus {
     border-color: var(--color-primary);
     background: var(--color-surface);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    box-shadow: 0 0 0 3px rgba(47, 104, 68,0.1);
 }
 .planner-task-list {
     margin-top: 16px;
@@ -142,8 +142,8 @@ button, input, select, textarea { font: inherit; }
 .planner-save-status {
     padding: 5px 11px;
     border-radius: var(--radius-pill);
-    color: #15803D;
-    background: #DCFCE7;
+    color: #276B45;
+    background: #E4F3E8;
     font-size: 0.76rem;
     font-weight: 700;
     white-space: nowrap;
@@ -207,7 +207,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(37,99,235,0.22);
+    outline: 3px solid rgba(47, 104, 68,0.22);
     outline-offset: 2px;
 }
 @media (max-width: 900px) {

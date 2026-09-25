@@ -1,3 +1,49 @@
+/* ============================================================
+   Flora — Shared Components
+   Loaded on every page, right after tokens.css. Anything that
+   should look the same everywhere (type rhythm, buttons, cards,
+   dialogs, the brand mark) lives here.
+============================================================ */
+
+/* ── Global type rhythm ──
+   Every page sets body copy via var(--font-main). Headings get
+   the serif on top of that, sitewide, in one place. */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+/* ── Brand mark ──
+   Every "Flora" wordmark (nav logos, sidebar logo, auth mark)
+   gets the same small sprout glyph and the Unbounded wordmark
+   font, reserved for this one use. */
+.logo-text,
+.sidebar-logo h2,
+.notes-nav-logo,
+.flashcards-logo,
+.quiz-logo,
+.res-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-wordmark);
+}
+
+.logo-text::before,
+.sidebar-logo h2::before,
+.notes-nav-logo::before,
+.flashcards-logo::before,
+.quiz-logo::before,
+.res-logo::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    background: var(--color-primary);
+    border-radius: 0 60% 60% 60%;
+    transform: rotate(-8deg);
+}
+
 .study-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -68,7 +114,7 @@
     color: white;
     border: none;
     padding: 14px 24px;
-    border-radius: 12px;
+    border-radius: var(--radius-button);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -80,7 +126,7 @@
 
 .primary-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 10px 24px rgba(47, 104, 68, 0.24);
     background: var(--color-primary-hover);
 }
 
@@ -108,7 +154,7 @@
 }
 
 .flora-confirm-dialog::backdrop {
-    background: rgba(17, 24, 39, 0.44);
+    background: rgba(29, 31, 22, 0.46);
     backdrop-filter: blur(3px);
 }
 
@@ -123,7 +169,7 @@
     display: grid;
     place-items: center;
     border-radius: 12px;
-    background: #FEE2E2;
+    background: var(--color-danger-bg);
     color: var(--color-danger);
     font-size: 1.5rem;
     font-weight: 800;
@@ -132,8 +178,8 @@
 .flora-confirm-title {
     margin: 0 0 10px;
     font-size: 1.3rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .flora-confirm-message {
@@ -153,7 +199,7 @@
 .flora-confirm-cancel {
     padding: 11px 20px;
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: var(--radius-button);
     background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.9rem;
@@ -169,18 +215,18 @@
 .flora-confirm-delete {
     padding: 11px 20px;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-button);
     background: var(--color-danger);
     color: white;
     font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition-fast);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 4px 12px rgba(179, 70, 47, 0.22);
 }
 
 .flora-confirm-delete:hover {
-    background: #DC2626;
+    background: var(--color-danger-hover);
     transform: translateY(-1px);
 }
 
@@ -190,7 +236,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 14px 6px 10px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     color: var(--color-text-secondary);
@@ -198,7 +244,7 @@
     font-weight: 600;
     text-decoration: none;
     transition: var(--transition-fast);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    box-shadow: 0 1px 2px rgba(35, 40, 31, 0.03);
     width: fit-content;
 }
 
@@ -212,9 +258,9 @@
 
 .back-btn:hover {
     color: var(--color-primary);
-    border-color: var(--color-primary-light);
+    border-color: var(--color-primary-light-strong);
     background: var(--color-primary-light);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 2px 6px rgba(47, 104, 68, 0.1);
 }
 
 .back-btn:hover::before {

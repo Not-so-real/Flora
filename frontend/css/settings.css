@@ -4,7 +4,7 @@ html, body {
     max-width: 100%;
     overflow-x: hidden;
     color: var(--color-text);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-main);
 }
 button, input { font: inherit; }
 
@@ -20,10 +20,10 @@ button, input { font: inherit; }
 .settings-eyebrow {
     margin: 0 0 8px;
     color: var(--color-primary);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 .settings-eyebrow.small { margin-bottom: 6px; }
 .settings-header h1 {
@@ -74,7 +74,7 @@ button, input { font: inherit; }
 }
 .settings-form input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    box-shadow: 0 0 0 3px rgba(47, 104, 68,0.1);
     background: var(--color-surface);
 }
 .settings-form input[readonly] {
@@ -117,7 +117,7 @@ button, input { font: inherit; }
     color: var(--color-primary);
     border-color: var(--color-primary);
 }
-.danger-card { border-color: #FECACA; }
+.danger-card { border-color: #E8C4B8; }
 .danger-actions {
     margin-top: 20px;
     display: flex;
@@ -126,20 +126,20 @@ button, input { font: inherit; }
 }
 .danger-btn {
     padding: 11px 18px;
-    border: 1px solid #FCA5A5;
+    border: 1px solid #E8A88F;
     border-radius: 12px;
-    background: #FEF2F2;
+    background: #FBEEE9;
     color: var(--color-danger);
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition-fast);
 }
 .danger-btn:hover {
-    background: #FEE2E2;
+    background: #F7E9E4;
 }
 button:focus-visible,
 input:focus-visible {
-    outline: 3px solid rgba(37,99,235,0.22);
+    outline: 3px solid rgba(47, 104, 68,0.22);
     outline-offset: 2px;
 }
 @media (max-width: 768px) {

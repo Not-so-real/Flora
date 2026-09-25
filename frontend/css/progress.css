@@ -4,7 +4,7 @@ html, body {
     max-width: 100%;
     overflow-x: hidden;
     color: var(--color-text);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-main);
 }
 
 .progress-page {
@@ -19,10 +19,10 @@ html, body {
 .progress-eyebrow {
     margin: 0 0 8px;
     color: var(--color-primary);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 .progress-header h1 {
     margin: 0;

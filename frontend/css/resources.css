@@ -8,7 +8,7 @@ body {
     max-width: 100%;
     overflow-x: hidden;
     color: var(--color-text);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-main);
 }
 
 button,
@@ -57,8 +57,8 @@ a {
 
 .res-logo {
     color: var(--color-primary);
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 500;
 }
 
 .res-nav-links {
@@ -188,7 +188,7 @@ a {
 .res-form select:focus,
 .res-form textarea:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
+    box-shadow: 0 0 0 3px rgba(47, 104, 68, 0.09);
 }
 
 .res-filters select:disabled,
@@ -361,7 +361,7 @@ a {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #f9fafb;
+    background: #F6F4EC;
 }
 
 .preview-content iframe,
@@ -392,10 +392,10 @@ a {
     text-transform: uppercase;
 }
 
-.res-type-badge.type-link { color: #1D4ED8; background: #DBEAFE; }
-.res-type-badge.type-video { color: #B91C1C; background: #FEE2E2; }
-.res-type-badge.type-book { color: #92400E; background: #FEF3C7; }
-.res-type-badge.type-document { color: #15803D; background: #DCFCE7; }
+.res-type-badge.type-link { color: #2A6F7E; background: #DCEEF0; }
+.res-type-badge.type-video { color: #8C3623; background: #F7E9E4; }
+.res-type-badge.type-book { color: #7A5518; background: #FBF0DC; }
+.res-type-badge.type-document { color: #276B45; background: #E4F3E8; }
 
 .res-workspace {
     height: 100%;
@@ -416,10 +416,10 @@ a {
 .res-eyebrow {
     margin: 0 0 5px;
     color: var(--color-primary);
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 .res-workspace-header h2 {
@@ -431,8 +431,8 @@ a {
 .res-save-status {
     padding: 5px 11px;
     border-radius: var(--radius-pill);
-    color: #15803D;
-    background: #DCFCE7;
+    color: #276B45;
+    background: #E4F3E8;
     font-size: 0.76rem;
     font-weight: 700;
     white-space: nowrap;
@@ -524,8 +524,8 @@ a {
 }
 
 .res-delete-btn:hover {
-    border-color: #FECACA;
-    background: #FEF2F2;
+    border-color: #E8C4B8;
+    background: #FBEEE9;
 }
 
 .res-editor-empty {
@@ -561,7 +561,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, 0.22);
+    outline: 3px solid rgba(47, 104, 68, 0.22);
     outline-offset: 2px;
 }
 
