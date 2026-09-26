@@ -3,6 +3,23 @@
 //  Handles Firebase Authentication flows.
 // ============================================================
 
+function debugLog(message, isError) {
+    const debugBox = document.getElementById("auth-debug");
+    if (debugBox) {
+        const line = document.createElement("div");
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        if (isError) line.style.color = "#B3462F";
+        debugBox.appendChild(line);
+        debugBox.style.display = "block";
+    }
+    if (isError) console.error(message);
+    else console.log(message);
+}
+
+window.onerror = function(msg, url, line) {
+    debugLog("JS ERROR: " + msg + " (line " + line + ")", true);
+};
+
 // Initialize Firebase safely
 const hasFirebaseConfig = Boolean(
     window.FLORA_FIREBASE_CONFIG &&
@@ -10,11 +27,19 @@ const hasFirebaseConfig = Boolean(
     !window.FLORA_FIREBASE_CONFIG.apiKey.includes("YOUR_")
 );
 
-if (hasFirebaseConfig && !firebase.apps.length) {
-    firebase.initializeApp(window.FLORA_FIREBASE_CONFIG);
+debugLog("Firebase config present: " + hasFirebaseConfig);
+
+if (hasFirebaseConfig && typeof firebase !== "undefined" && !firebase.apps.length) {
+    try {
+        firebase.initializeApp(window.FLORA_FIREBASE_CONFIG);
+        debugLog("Firebase initialized");
+    } catch (e) {
+        debugLog("Firebase init failed: " + e.message, true);
+    }
 }
 
-const auth = hasFirebaseConfig ? firebase.auth() : null;
+const auth = hasFirebaseConfig && typeof firebase !== "undefined" ? firebase.auth() : null;
+debugLog("Auth object present: " + !!auth);
 
 // Track navigation so multiple handlers don't fight
 let isRedirecting = false;
@@ -24,12 +49,12 @@ function safeRedirect(url) {
     const current = window.location.href.replace(/\/$/, "");
     const target = new URL(url, window.location.href).href.replace(/\/$/, "");
     if (current === target) {
-        console.log("[Flora Auth] Already on target page:", url);
+        debugLog("Already on target page: " + url);
         return;
     }
 
     isRedirecting = true;
-    console.log("[Flora Auth] Redirecting to:", target);
+    debugLog("Redirecting to: " + target);
     window.location.replace(target);
 }
 
@@ -41,13 +66,15 @@ function showAuthBox() {
         box.style.display = "block";
         box.classList.add("fade-in");
     }
+    debugLog("Login form shown");
 }
 
 function showLoading(message) {
     const loader = document.getElementById("auth-loader");
     const box = document.getElementById("auth-box");
     if (loader) {
-        loader.querySelector("p").textContent = message || "Please wait...";
+        const p = loader.querySelector("p");
+        if (p) p.textContent = message || "Please wait...";
         loader.style.display = "flex";
     }
     if (box) box.style.display = "none";
@@ -71,6 +98,8 @@ let isSignUp = false;
 
 // ── Auth Page Event Listeners ───────────────────────────────
 if (authForm) {
+    debugLog("Auth form found");
+
     if (!auth) {
         authError.textContent = "Firebase is not configured yet. Add your real values to js/firebase-config.js first.";
         authSubmitBtn.disabled = true;
@@ -118,16 +147,16 @@ if (authForm) {
             if (isSignUp) {
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 await userCredential.user.updateProfile({ displayName: name });
-                console.log("Registered:", userCredential.user);
+                debugLog("Registered: " + userCredential.user.email);
             } else {
                 await auth.signInWithEmailAndPassword(email, password);
-                console.log("Logged in");
+                debugLog("Logged in");
             }
 
             safeRedirect("dashboard.html");
 
         } catch (error) {
-            console.error("Auth Error:", error);
+            debugLog("Auth Error: " + error.code + " — " + error.message, true);
             authError.textContent = getFriendlyErrorMessage(error.code);
             authSubmitBtn.disabled = false;
             authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
@@ -159,7 +188,7 @@ let authStateResolved = false;
 function fallbackToAuthBox() {
     if (authStateResolved) return;
     authStateResolved = true;
-    console.warn("[Flora Auth] Firebase auth state timed out — showing login form.");
+    debugLog("Auth state timed out — showing login form", true);
     if (authForm) showAuthBox();
 }
 
@@ -177,15 +206,18 @@ if (auth) {
         const isAuthPage = path.includes("auth.html");
         const isLandingPage = path === "/" || path.endsWith("index.html");
 
-        console.log("[Flora Auth] State resolved. Path:", path, "Logged in:", !!user);
+        debugLog("Auth state resolved. Path: " + path + " | Logged in: " + !!user);
+
+        // IMPORTANT: On auth pages, do NOT auto-redirect even if logged in.
+        // This prevents redirect loops while we debug. The form submit handler
+        // will still redirect after a successful login.
+        if (isAuthPage) {
+            showAuthBox();
+            return;
+        }
 
         if (user) {
-            if (isAuthPage) {
-                showLoading("Redirecting to your dashboard...");
-                safeRedirect("dashboard.html");
-                return;
-            }
-
+            // Update UI on other pages (like header names and avatars)
             const profileName = document.querySelector(".sidebar-profile h4");
             if (profileName && user.displayName) {
                 profileName.textContent = user.displayName;
@@ -199,15 +231,13 @@ if (auth) {
                 });
             }
         } else {
-            if (isAuthPage) {
-                showAuthBox();
-            } else if (!isLandingPage) {
+            if (!isLandingPage) {
                 safeRedirect("auth.html");
             }
         }
     });
 } else if (authForm) {
-    console.error("[Flora Auth] Firebase not configured.");
+    debugLog("Firebase not configured — showing form", true);
     showAuthBox();
 }
 
@@ -221,7 +251,7 @@ window.floraLogout = function() {
     auth.signOut().then(() => {
         safeRedirect("index.html");
     }).catch((error) => {
-        console.error("Logout Error:", error);
+        debugLog("Logout Error: " + error.message, true);
     });
 };
 
