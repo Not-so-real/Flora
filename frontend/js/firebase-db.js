@@ -71,3 +71,57 @@ function onCloudUpdate(collection, callback) {
         console.error(`Error listening to ${collection}:`, error);
     });
 }
+/**
+ * Migrates localStorage data to the cloud once, then keeps cloud and localStorage in sync.
+ */
+async function migrateAndSync(collection, localKey, callback, normalize = x => x) {
+    const user = firebase.auth().currentUser;
+    if (!user) return () => {};
+
+    const colRef = getUserCollection(collection);
+    if (!colRef) return () => {};
+
+    // 1. Migrate local data to cloud if it exists
+    const localRaw = localStorage.getItem(localKey);
+    if (localRaw) {
+        try {
+            const localItems = JSON.parse(localRaw).map(normalize).filter(Boolean);
+            if (localItems.length) {
+                const batch = db.batch();
+                localItems.forEach(item => {
+                    const docRef = colRef.doc(item.id);
+                    batch.set(docRef, {
+                        ...item,
+                        updatedAt: item.updatedAt || Date.now()
+                    }, { merge: true });
+                });
+                await batch.commit();
+                localStorage.removeItem(localKey);
+            }
+        } catch (error) {
+            console.error(`Error migrating ${collection} from localStorage:`, error);
+        }
+    }
+
+    // 2. Fetch initial cloud data
+    const initialSnapshot = await colRef.get();
+    const initialItems = initialSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(normalize)
+        .filter(Boolean);
+    callback(initialItems);
+
+    // 3. Listen for cloud updates and keep localStorage synced
+    return colRef.onSnapshot(snapshot => {
+        const items = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .map(normalize)
+            .filter(Boolean);
+        try {
+            localStorage.setItem(localKey, JSON.stringify(items));
+        } catch (e) {}
+        callback(items);
+    }, error => {
+        console.error(`Error listening to ${collection}:`, error);
+    });
+}
