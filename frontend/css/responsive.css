@@ -1,22 +1,22 @@
-/* Shared responsive rules. Page-specific desktop layouts stay in their own files. */
+/* ============================================================
+   Flora — Responsive Styles
+   Mobile-first adjustments for the landing page and workspace
+   pages imported from the Flora repository.
+============================================================ */
 
+/* ── Tablets and smaller ── */
 @media (max-width: 1024px) {
     /* Landing */
-    .hero {
-        grid-template-columns: 1fr 390px;
-        gap: 42px;
-    }
-
     .features-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .feature-item:nth-child(3n) {
-        border-right: 1px solid var(--color-border);
+    .comparison-container {
+        grid-template-columns: 1fr;
     }
 
-    .feature-item:nth-child(2n) {
-        border-right: 0;
+    .journey-line {
+        display: none;
     }
 
     /* Dashboard */
@@ -27,13 +27,18 @@
     .stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
 }
 
+/* ── Small tablets / large phones ── */
 @media (max-width: 768px) {
-    /* Landing */
-    .site-nav {
-        width: min(100% - 32px, 1200px);
+    /* Global section padding */
+    section {
+        padding: 4rem 6%;
+    }
+
+    /* Landing navigation */
+    nav {
+        padding: 1rem 6%;
     }
 
     .nav-links {
@@ -44,40 +49,113 @@
         display: none;
     }
 
-    .hero,
-    .content-section,
-    .final-cta,
-    .site-footer {
-        width: min(100% - 32px, 1200px);
+    .nav-actions .btn-primary {
+        padding: 0.75rem 1.2rem;
+        font-size: 0.9rem;
     }
 
+    /* Hero */
     .hero {
         min-height: auto;
-        padding: 64px 0 80px;
-        grid-template-columns: 1fr;
+        padding: 4rem 0 5rem;
     }
 
-    .hero-right {
-        width: min(100%, 520px);
+    .hero-left {
+        max-width: 100%;
     }
 
-    .content-section {
-        padding: 80px 0;
+    .hero-title {
+        font-size: clamp(2.6rem, 10vw, 3.8rem);
+        margin-bottom: 1.5rem;
     }
 
+    .hero-description {
+        font-size: 1.05rem;
+        max-width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    .hero-badge {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Section headings */
+    .section-heading {
+        margin-bottom: 2.5rem;
+    }
+
+    .section-heading h2 {
+        font-size: clamp(1.9rem, 6vw, 2.6rem);
+    }
+
+    .section-heading p {
+        font-size: 1rem;
+    }
+
+    /* Features */
     .features-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .feature-item,
-    .feature-item:nth-child(2n),
-    .feature-item:nth-child(3n) {
-        border-right: 0;
+    .feature-card {
+        min-height: auto;
+        padding: 1.5rem;
     }
 
-    .final-cta {
-        padding-top: 80px;
-        padding-bottom: 80px;
+    /* Learning journey */
+    .journey-container {
+        flex-direction: column;
+        gap: 2.5rem;
+        margin-top: 2.5rem;
+    }
+
+    .journey-step {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    /* Comparison */
+    .comparison-card {
+        padding: 1.8rem;
+    }
+
+    .comparison-card h3 {
+        font-size: 1.4rem;
+    }
+
+    /* FAQ */
+    .faq-container {
+        margin-top: 2.5rem;
+    }
+
+    .faq-question {
+        padding: 1.25rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .faq-answer {
+        padding: 0 1.5rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    /* CTA */
+    #cta {
+        padding: 4rem 6%;
+    }
+
+    .cta-container {
+        padding: 3.5rem 1.5rem;
+        border-radius: 24px;
+    }
+
+    .cta-container h2 {
+        font-size: clamp(1.9rem, 6vw, 2.8rem);
+    }
+
+    .cta-container p {
+        font-size: 1rem;
+        margin-bottom: 2rem;
     }
 
     /* Dashboard */
@@ -198,23 +276,116 @@
     }
 }
 
+/* ── Phones ── */
 @media (max-width: 520px) {
+    section {
+        padding: 3.5rem 5%;
+    }
+
+    nav {
+        padding: 0.9rem 5%;
+    }
+
+    .logo-text {
+        font-size: 1.25rem;
+    }
+
+    .nav-actions .btn-primary {
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .hero {
+        padding: 3rem 0 4rem;
+    }
+
     .hero-title {
-        font-size: clamp(3rem, 16vw, 4.3rem);
+        font-size: clamp(2.2rem, 11vw, 3.2rem);
+    }
+
+    .hero-description {
+        font-size: 1rem;
     }
 
     .hero-buttons {
         align-items: center;
         flex-direction: column;
+        width: 100%;
     }
 
-    .quiz-options {
-        grid-template-columns: 1fr;
+    .hero-buttons .btn {
+        width: min(100%, 280px);
     }
 
-    .features-grid,
+    .section-heading {
+        margin-bottom: 2rem;
+    }
+
+    .feature-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 1.4rem;
+    }
+
+    .feature-card h3 {
+        font-size: 1.15rem;
+    }
+
+    .journey-step h3 {
+        font-size: 1.15rem;
+    }
+
+    .audience-tags {
+        margin-top: 2rem;
+    }
+
+    .audience-tag {
+        padding: 0.7rem 1.1rem;
+        font-size: 0.9rem;
+    }
+
+    .comparison-card {
+        padding: 1.5rem;
+    }
+
+    .comparison-card ul {
+        gap: 1rem;
+    }
+
+    .comparison-card li {
+        font-size: 0.95rem;
+    }
+
+    .faq-question {
+        padding: 1.1rem 1.25rem;
+    }
+
+    .faq-answer {
+        padding: 0 1.25rem 1.1rem;
+    }
+
+    .cta-container {
+        padding: 2.5rem 1.25rem;
+        border-radius: 20px;
+    }
+
+    .cta-container h2 {
+        font-size: clamp(1.7rem, 7vw, 2.4rem);
+        margin-bottom: 1.25rem;
+    }
+
+    .cta-container p {
+        font-size: 0.95rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .cta-container .btn {
+        width: min(100%, 280px);
+    }
+
+    /* Dashboard */
     .stats-grid {
-        display: block;
+        grid-template-columns: 1fr;
     }
 
     .stat-card {
