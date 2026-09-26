@@ -16,6 +16,12 @@ if (hasFirebaseConfig && !firebase.apps.length) {
 
 const auth = hasFirebaseConfig ? firebase.auth() : null;
 
+// Resolve paths relative to /flora/ so redirects work on any host
+function floraPath(page) {
+    const base = window.location.origin;
+    return `${base}/flora/${page}`;
+}
+
 // Track navigation so multiple handlers don't fight
 let isRedirecting = false;
 function safeRedirect(url) {
@@ -115,7 +121,7 @@ if (authForm) {
                 console.log("Logged in");
             }
 
-            safeRedirect("dashboard.html");
+            safeRedirect(floraPath("dashboard.html"));
 
         } catch (error) {
             console.error("Auth Error:", error);
@@ -139,6 +145,7 @@ function getFriendlyErrorMessage(code) {
         case "auth/operation-not-allowed": return "Email/Password login is not enabled in Firebase.";
         case "auth/invalid-credential": return "Invalid email or password.";
         case "auth/too-many-requests": return "Too many attempts. Please try again later.";
+        case "auth/unauthorized-domain": return "This domain is not authorized for Firebase Auth. Add it in your Firebase Console.";
         default: return "An error occurred. Please try again.";
     }
 }
@@ -149,7 +156,7 @@ if (auth) {
     // Fast synchronous check on auth pages to avoid flashing the login form
     if (authForm && auth.currentUser) {
         showLoading("Redirecting to your dashboard...");
-        safeRedirect("dashboard.html");
+        safeRedirect(floraPath("dashboard.html"));
     }
 
     auth.onAuthStateChanged((user) => {
@@ -163,7 +170,7 @@ if (auth) {
             // User is logged in
             if (isAuthPage) {
                 showLoading("Redirecting to your dashboard...");
-                safeRedirect("dashboard.html");
+                safeRedirect(floraPath("dashboard.html"));
                 return;
             }
 
@@ -185,7 +192,7 @@ if (auth) {
             if (isAuthPage) {
                 showAuthBox();
             } else if (!isLandingPage) {
-                safeRedirect("auth.html");
+                safeRedirect(floraPath("auth.html"));
             }
         }
     });
@@ -197,12 +204,12 @@ if (auth) {
 // ── Logout Function ─────────────────────────────────────────
 window.floraLogout = function() {
     if (!auth) {
-        window.location.href = "index.html";
+        window.location.href = floraPath("index.html");
         return;
     }
 
     auth.signOut().then(() => {
-        safeRedirect("index.html");
+        safeRedirect(floraPath("index.html"));
     }).catch((error) => {
         console.error("Logout Error:", error);
     });
