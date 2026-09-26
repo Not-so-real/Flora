@@ -254,16 +254,37 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    .notes-nav {
+        .notes-nav,
+    .flashcards-nav,
+    .quiz-nav,
+    .res-nav {
         padding: 0 16px;
     }
 
-    .notes-nav-center {
+    .notes-nav-center,
+    .flashcards-nav-links,
+    .quiz-nav-links,
+    .res-nav-links {
         gap: 2px;
+        overflow-x: auto;
+        max-width: calc(100vw - 120px);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
     }
 
-    .notes-nav-link {
+    .notes-nav-center::-webkit-scrollbar,
+    .flashcards-nav-links::-webkit-scrollbar,
+    .quiz-nav-links::-webkit-scrollbar,
+    .res-nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .notes-nav-link,
+    .flashcards-nav-links a,
+    .quiz-nav-links a,
+    .res-nav-links a {
         padding: 6px 9px;
+        white-space: nowrap;
     }
 
     .notes-editor {
