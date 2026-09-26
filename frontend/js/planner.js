@@ -44,10 +44,17 @@ firebase.auth().onAuthStateChanged(async user => {
     if (!user) { window.location.href = "auth.html"; return; }
 
     unsubSubjectsP = onCloudUpdate("subjects", cloudSubjects => {
-        subjects = cloudSubjects.filter(s => s && s.id && s.name);
-        renderFilterSubjectSelect();
-        renderTaskList();
-    });
+    subjects = cloudSubjects.filter(s => s && s.id && s.name);
+    if (subjects.length === 0) {
+        // Fallback to localStorage subjects if cloud is empty
+        const local = localStorage.getItem("flora-subjects");
+        try {
+            subjects = (local ? JSON.parse(local) : []).filter(s => s && s.id && s.name);
+        } catch(e) {}
+    }
+    renderFilterSubjectSelect();
+    renderTaskList();
+});
 
     unsubTasks = await migrateAndSync(
         "planner",
