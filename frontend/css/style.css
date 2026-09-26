@@ -322,13 +322,17 @@ nav{
 
     margin:0 auto 2.5rem;
 
-    max-width:500px;
+    max-width:640px;
+
+    line-height:1.7;
 
 }
 
 .hero-buttons{
 
     display:flex;
+
+    justify-content:center;
 
     gap:1rem;
 
