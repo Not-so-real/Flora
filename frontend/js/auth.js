@@ -21,7 +21,6 @@ let isRedirecting = false;
 function safeRedirect(url) {
     if (isRedirecting) return;
 
-    // Normalize URL for comparison
     const current = window.location.href.replace(/\/$/, "");
     const target = new URL(url, window.location.href).href.replace(/\/$/, "");
     if (current === target) {
@@ -90,7 +89,7 @@ if (authForm) {
         nameGroup.style.display = isSignUp ? "block" : "none";
         nameInput.required = isSignUp;
 
-        emailInput.setAttribute("autocomplete", isSignUp ? "email" : "email");
+        emailInput.setAttribute("autocomplete", "email");
         passwordInput.setAttribute("autocomplete", isSignUp ? "new-password" : "current-password");
 
         authError.textContent = "";
@@ -155,7 +154,6 @@ function getFriendlyErrorMessage(code) {
 }
 
 // ── Global Auth Guard ───────────────────────────────────────
-// This part runs on every page that includes auth.js
 let authStateResolved = false;
 
 function fallbackToAuthBox() {
@@ -166,14 +164,12 @@ function fallbackToAuthBox() {
 }
 
 if (auth) {
-    // Safety net: if Firebase takes too long, show the form anyway
     const fallbackTimer = setTimeout(fallbackToAuthBox, 3500);
 
     auth.onAuthStateChanged((user) => {
         if (isRedirecting) return;
-
-        // Only process the first resolved state to avoid flicker/loops
         if (authStateResolved) return;
+
         authStateResolved = true;
         clearTimeout(fallbackTimer);
 
@@ -184,14 +180,12 @@ if (auth) {
         console.log("[Flora Auth] State resolved. Path:", path, "Logged in:", !!user);
 
         if (user) {
-            // User is logged in
             if (isAuthPage) {
                 showLoading("Redirecting to your dashboard...");
                 safeRedirect("dashboard.html");
                 return;
             }
 
-            // Update UI on other pages (like header names and avatars)
             const profileName = document.querySelector(".sidebar-profile h4");
             if (profileName && user.displayName) {
                 profileName.textContent = user.displayName;
@@ -205,7 +199,6 @@ if (auth) {
                 });
             }
         } else {
-            // User is logged out
             if (isAuthPage) {
                 showAuthBox();
             } else if (!isLandingPage) {
@@ -214,7 +207,6 @@ if (auth) {
         }
     });
 } else if (authForm) {
-    // No Firebase config — show the form anyway with the error
     console.error("[Flora Auth] Firebase not configured.");
     showAuthBox();
 }
