@@ -16,6 +16,34 @@ if (hasFirebaseConfig && !firebase.apps.length) {
 
 const auth = hasFirebaseConfig ? firebase.auth() : null;
 
+// Track navigation so multiple handlers don't fight
+let isRedirecting = false;
+function safeRedirect(url) {
+    if (isRedirecting) return;
+    isRedirecting = true;
+    window.location.replace(url);
+}
+
+function showAuthBox() {
+    const loader = document.getElementById("auth-loader");
+    const box = document.getElementById("auth-box");
+    if (loader) loader.style.display = "none";
+    if (box) {
+        box.style.display = "block";
+        box.classList.add("fade-in");
+    }
+}
+
+function showLoading(message) {
+    const loader = document.getElementById("auth-loader");
+    const box = document.getElementById("auth-box");
+    if (loader) {
+        loader.querySelector("p").textContent = message || "Please wait...";
+        loader.style.display = "flex";
+    }
+    if (box) box.style.display = "none";
+}
+
 // ── DOM Elements (only present on auth.html) ────────────────
 const authForm = document.getElementById("auth-form");
 const authTitle = document.getElementById("auth-title");
@@ -37,25 +65,37 @@ if (authForm) {
     if (!auth) {
         authError.textContent = "Firebase is not configured yet. Add your real values to js/firebase-config.js first.";
         authSubmitBtn.disabled = true;
+        showAuthBox();
     }
 
     authToggleBtn.addEventListener("click", () => {
         isSignUp = !isSignUp;
-        
+
         authTitle.textContent = isSignUp ? "Create Account" : "Welcome Back";
         authSubtitle.textContent = isSignUp ? "Start your learning journey with Flora" : "Log in to your Flora account";
         authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
         authToggleBtn.textContent = isSignUp ? "Login" : "Sign Up";
         authToggleText.firstChild.textContent = isSignUp ? "Already have an account? " : "Don't have an account? ";
-        
+
         nameGroup.style.display = isSignUp ? "block" : "none";
         nameInput.required = isSignUp;
+
+        emailInput.setAttribute("autocomplete", isSignUp ? "email" : "email");
+        passwordInput.setAttribute("autocomplete", isSignUp ? "new-password" : "current-password");
+
         authError.textContent = "";
     });
 
     authForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
+        if (!auth) {
+            authError.textContent = "Firebase is not configured.";
+            return;
+        }
+
+        if (authSubmitBtn.disabled) return;
+
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         const name = nameInput.value.trim();
@@ -63,28 +103,26 @@ if (authForm) {
         authSubmitBtn.disabled = true;
         authSubmitBtn.textContent = isSignUp ? "Creating account..." : "Logging in...";
         authError.textContent = "";
+        showLoading(isSignUp ? "Creating your account..." : "Logging you in...");
 
         try {
             if (isSignUp) {
-                // Sign Up
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                // Update profile with name
                 await userCredential.user.updateProfile({ displayName: name });
                 console.log("Registered:", userCredential.user);
             } else {
-                // Login
                 await auth.signInWithEmailAndPassword(email, password);
                 console.log("Logged in");
             }
-            
-            // Redirect on success
-            window.location.href = "dashboard.html";
-            
+
+            safeRedirect("dashboard.html");
+
         } catch (error) {
             console.error("Auth Error:", error);
             authError.textContent = getFriendlyErrorMessage(error.code);
             authSubmitBtn.disabled = false;
             authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
+            showAuthBox();
         }
     });
 }
@@ -99,6 +137,8 @@ function getFriendlyErrorMessage(code) {
         case "auth/wrong-password": return "Incorrect password. Try again.";
         case "auth/weak-password": return "Password should be at least 6 characters.";
         case "auth/operation-not-allowed": return "Email/Password login is not enabled in Firebase.";
+        case "auth/invalid-credential": return "Invalid email or password.";
+        case "auth/too-many-requests": return "Too many attempts. Please try again later.";
         default: return "An error occurred. Please try again.";
     }
 }
@@ -106,16 +146,27 @@ function getFriendlyErrorMessage(code) {
 // ── Global Auth Guard ───────────────────────────────────────
 // This part runs on every page that includes auth.js
 if (auth) {
+    // Fast synchronous check on auth pages to avoid flashing the login form
+    if (authForm && auth.currentUser) {
+        showLoading("Redirecting to your dashboard...");
+        safeRedirect("dashboard.html");
+    }
+
     auth.onAuthStateChanged((user) => {
-        const isAuthPage = window.location.pathname.includes("auth.html");
-        const isLandingPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
+        if (isRedirecting) return;
+
+        const path = window.location.pathname;
+        const isAuthPage = path.includes("auth.html");
+        const isLandingPage = path.endsWith("index.html") || path.endsWith("/");
 
         if (user) {
             // User is logged in
             if (isAuthPage) {
-                window.location.href = "dashboard.html";
+                showLoading("Redirecting to your dashboard...");
+                safeRedirect("dashboard.html");
+                return;
             }
-            
+
             // Update UI on other pages (like header names and avatars)
             const profileName = document.querySelector(".sidebar-profile h4");
             if (profileName && user.displayName) {
@@ -131,11 +182,16 @@ if (auth) {
             }
         } else {
             // User is logged out
-            if (!isAuthPage && !isLandingPage) {
-                window.location.href = "auth.html";
+            if (isAuthPage) {
+                showAuthBox();
+            } else if (!isLandingPage) {
+                safeRedirect("auth.html");
             }
         }
     });
+} else if (authForm) {
+    // No Firebase config — show the form anyway with the error
+    showAuthBox();
 }
 
 // ── Logout Function ─────────────────────────────────────────
@@ -146,7 +202,7 @@ window.floraLogout = function() {
     }
 
     auth.signOut().then(() => {
-        window.location.href = "index.html";
+        safeRedirect("index.html");
     }).catch((error) => {
         console.error("Logout Error:", error);
     });
@@ -198,6 +254,5 @@ window.floraConfirm = function(title, message) {
         deleteBtn.addEventListener("click", onDelete);
 
         dialog.showModal();
-        deleteBtn.focus();
     });
 };

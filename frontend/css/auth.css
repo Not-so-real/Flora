@@ -3,11 +3,28 @@
     place-items: center;
     min-height: 100vh;
     padding: 20px;
+    background: var(--color-background);
 }
 
 .auth-container {
     width: 100%;
     max-width: 420px;
+}
+
+.auth-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 40px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    animation: fadeIn 250ms ease-out forwards;
+}
+
+.auth-loader .logo-mark {
+    animation: pulseSoft 1.8s ease-in-out infinite;
 }
 
 .auth-box {
