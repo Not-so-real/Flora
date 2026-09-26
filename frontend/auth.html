@@ -13,14 +13,8 @@
     <link rel="stylesheet" href="css/auth.css">
 </head>
 <body class="auth-page">
-
     <main class="auth-container">
-        <div class="auth-loader" id="auth-loader">
-            <div class="logo-mark">F</div>
-            <p>Checking your session...</p>
-        </div>
-
-        <div class="auth-box" id="auth-box" style="display: none;">
+        <div class="auth-box">
             <header class="auth-header">
                 <div class="logo-mark">F</div>
                 <h1 id="auth-title">Welcome Back</h1>
@@ -30,17 +24,17 @@
             <form id="auth-form" class="auth-form" autocomplete="off">
                 <div class="form-group" id="name-group" style="display: none;">
                     <label for="user-name">Full Name</label>
-                    <input type="text" id="user-name" placeholder="Shivam" autocomplete="name">
+                    <input type="text" id="user-name" placeholder="Shivam">
                 </div>
 
                 <div class="form-group">
                     <label for="user-email">Email Address</label>
-                    <input type="email" id="user-email" placeholder="you@example.com" required autocomplete="email">
+                    <input type="email" id="user-email" placeholder="you@example.com" required>
                 </div>
 
                 <div class="form-group">
                     <label for="user-password">Password</label>
-                    <input type="password" id="user-password" placeholder="••••••••" required minlength="6" autocomplete="current-password">
+                    <input type="password" id="user-password" placeholder="••••••••" required minlength="6">
                 </div>
 
                 <p id="auth-error" class="auth-error" role="alert"></p>
@@ -54,10 +48,8 @@
         </div>
     </main>
 
-    <!-- Firebase SDKs -->
     <script src="js/firebase/firebase-app-compat.js"></script>
     <script src="js/firebase/firebase-auth-compat.js"></script>
-    
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
 </body>
