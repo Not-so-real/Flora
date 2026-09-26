@@ -21,46 +21,50 @@ const nameInput = document.getElementById("user-name");
 
 let isSignUp = false;
 
-if (authForm) {
-    authToggleBtn.addEventListener("click", () => {
-        isSignUp = !isSignUp;
-        authTitle.textContent = isSignUp ? "Create Account" : "Welcome Back";
-        authSubtitle.textContent = isSignUp ? "Start your learning journey with Flora" : "Log in to your Flora account";
-        authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
-        authToggleBtn.textContent = isSignUp ? "Login" : "Sign Up";
-        authToggleText.firstChild.textContent = isSignUp ? "Already have an account? " : "Don't have an account? ";
-        nameGroup.style.display = isSignUp ? "block" : "none";
-        nameInput.required = isSignUp;
-        authError.textContent = "";
-    });
+authToggleBtn.addEventListener("click", () => {
+    isSignUp = !isSignUp;
 
-    authForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    authTitle.textContent = isSignUp ? "Create Account" : "Welcome Back";
+    authSubtitle.textContent = isSignUp ? "Start your learning journey with Flora" : "Log in to your Flora account";
+    authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
+    authToggleBtn.textContent = isSignUp ? "Login" : "Sign Up";
+    authToggleText.firstChild.textContent = isSignUp ? "Already have an account? " : "Don't have an account? ";
 
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const name = nameInput.value.trim();
+    nameGroup.style.display = isSignUp ? "block" : "none";
+    nameInput.required = isSignUp;
 
-        authSubmitBtn.disabled = true;
-        authSubmitBtn.textContent = isSignUp ? "Creating account..." : "Logging in...";
-        authError.textContent = "";
+    emailInput.setAttribute("autocomplete", "email");
+    passwordInput.setAttribute("autocomplete", isSignUp ? "new-password" : "current-password");
 
-        try {
-            if (isSignUp) {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                await userCredential.user.updateProfile({ displayName: name });
-            } else {
-                await auth.signInWithEmailAndPassword(email, password);
-            }
-            window.location.href = "dashboard.html";
-        } catch (error) {
-            console.error(error);
-            authError.textContent = getFriendlyError(error.code);
-            authSubmitBtn.disabled = false;
-            authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
+    authError.textContent = "";
+});
+
+authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const name = nameInput.value.trim();
+
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = isSignUp ? "Creating account..." : "Logging in...";
+    authError.textContent = "";
+
+    try {
+        if (isSignUp) {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({ displayName: name });
+        } else {
+            await auth.signInWithEmailAndPassword(email, password);
         }
-    });
-}
+        window.location.href = "dashboard.html";
+    } catch (error) {
+        console.error(error);
+        authError.textContent = getFriendlyError(error.code);
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
+    }
+});
 
 function getFriendlyError(code) {
     switch (code) {
