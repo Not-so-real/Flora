@@ -1,7 +1,7 @@
-const firebaseConfig = window.FLORA_FIREBASE_CONFIG;
+const floraFirebaseConfig = window.FLORA_FIREBASE_CONFIG;
 
-if (firebaseConfig && firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("YOUR_")) {
-    firebase.initializeApp(firebaseConfig);
+if (floraFirebaseConfig && floraFirebaseConfig.apiKey && !floraFirebaseConfig.apiKey.includes("YOUR_")) {
+    firebase.initializeApp(floraFirebaseConfig);
 }
 
 const auth = firebase.auth();
@@ -21,44 +21,46 @@ const nameInput = document.getElementById("user-name");
 
 let isSignUp = false;
 
-authToggleBtn.addEventListener("click", () => {
-    isSignUp = !isSignUp;
-    authTitle.textContent = isSignUp ? "Create Account" : "Welcome Back";
-    authSubtitle.textContent = isSignUp ? "Start your learning journey with Flora" : "Log in to your Flora account";
-    authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
-    authToggleBtn.textContent = isSignUp ? "Login" : "Sign Up";
-    authToggleText.firstChild.textContent = isSignUp ? "Already have an account? " : "Don't have an account? ";
-    nameGroup.style.display = isSignUp ? "block" : "none";
-    nameInput.required = isSignUp;
-    authError.textContent = "";
-});
-
-authForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const name = nameInput.value.trim();
-
-    authSubmitBtn.disabled = true;
-    authSubmitBtn.textContent = isSignUp ? "Creating account..." : "Logging in...";
-    authError.textContent = "";
-
-    try {
-        if (isSignUp) {
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            await userCredential.user.updateProfile({ displayName: name });
-        } else {
-            await auth.signInWithEmailAndPassword(email, password);
-        }
-        window.location.href = "dashboard.html";
-    } catch (error) {
-        console.error(error);
-        authError.textContent = getFriendlyError(error.code);
-        authSubmitBtn.disabled = false;
+if (authForm) {
+    authToggleBtn.addEventListener("click", () => {
+        isSignUp = !isSignUp;
+        authTitle.textContent = isSignUp ? "Create Account" : "Welcome Back";
+        authSubtitle.textContent = isSignUp ? "Start your learning journey with Flora" : "Log in to your Flora account";
         authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
-    }
-});
+        authToggleBtn.textContent = isSignUp ? "Login" : "Sign Up";
+        authToggleText.firstChild.textContent = isSignUp ? "Already have an account? " : "Don't have an account? ";
+        nameGroup.style.display = isSignUp ? "block" : "none";
+        nameInput.required = isSignUp;
+        authError.textContent = "";
+    });
+
+    authForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const name = nameInput.value.trim();
+
+        authSubmitBtn.disabled = true;
+        authSubmitBtn.textContent = isSignUp ? "Creating account..." : "Logging in...";
+        authError.textContent = "";
+
+        try {
+            if (isSignUp) {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+            } else {
+                await auth.signInWithEmailAndPassword(email, password);
+            }
+            window.location.href = "dashboard.html";
+        } catch (error) {
+            console.error(error);
+            authError.textContent = getFriendlyError(error.code);
+            authSubmitBtn.disabled = false;
+            authSubmitBtn.textContent = isSignUp ? "Sign Up" : "Login";
+        }
+    });
+}
 
 function getFriendlyError(code) {
     switch (code) {
