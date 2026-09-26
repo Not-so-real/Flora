@@ -16,12 +16,6 @@ if (hasFirebaseConfig && !firebase.apps.length) {
 
 const auth = hasFirebaseConfig ? firebase.auth() : null;
 
-// Resolve paths relative to /flora/ so redirects work on any host
-function floraPath(page) {
-    const base = window.location.origin;
-    return `${base}/flora/${page}`;
-}
-
 // Track navigation so multiple handlers don't fight
 let isRedirecting = false;
 function safeRedirect(url) {
@@ -121,7 +115,7 @@ if (authForm) {
                 console.log("Logged in");
             }
 
-            safeRedirect(floraPath("dashboard.html"));
+            safeRedirect("dashboard.html");
 
         } catch (error) {
             console.error("Auth Error:", error);
@@ -156,7 +150,7 @@ if (auth) {
     // Fast synchronous check on auth pages to avoid flashing the login form
     if (authForm && auth.currentUser) {
         showLoading("Redirecting to your dashboard...");
-        safeRedirect(floraPath("dashboard.html"));
+        safeRedirect("dashboard.html");
     }
 
     auth.onAuthStateChanged((user) => {
@@ -170,7 +164,7 @@ if (auth) {
             // User is logged in
             if (isAuthPage) {
                 showLoading("Redirecting to your dashboard...");
-                safeRedirect(floraPath("dashboard.html"));
+                safeRedirect("dashboard.html");
                 return;
             }
 
@@ -192,7 +186,7 @@ if (auth) {
             if (isAuthPage) {
                 showAuthBox();
             } else if (!isLandingPage) {
-                safeRedirect(floraPath("auth.html"));
+                safeRedirect("auth.html");
             }
         }
     });
@@ -204,12 +198,12 @@ if (auth) {
 // ── Logout Function ─────────────────────────────────────────
 window.floraLogout = function() {
     if (!auth) {
-        window.location.href = floraPath("index.html");
+        window.location.href = "index.html";
         return;
     }
 
     auth.signOut().then(() => {
-        safeRedirect(floraPath("index.html"));
+        safeRedirect("index.html");
     }).catch((error) => {
         console.error("Logout Error:", error);
     });
